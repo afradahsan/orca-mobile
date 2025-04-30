@@ -252,7 +252,7 @@ Widget buildDrawerContent({required String title, required String imagePath, req
       ),
       Container(
         padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
-        decoration: BoxDecoration(color: const Color.fromARGB(255, 77, 103, 70)),
+        decoration: const BoxDecoration(color: Color.fromARGB(255, 77, 103, 70)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
