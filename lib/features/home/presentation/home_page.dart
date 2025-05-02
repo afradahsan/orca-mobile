@@ -25,7 +25,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 8.sp),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,7 +37,7 @@ class _HomePageState extends State<HomePage> {
                   Text('View All', style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.bold)),
                   Icon(
                     Icons.arrow_right,
-                    size: 30,
+                    size: 20.sp,
                     color: green,
                   )
                 ],
@@ -50,26 +50,26 @@ class _HomePageState extends State<HomePage> {
                     _buildWorkoutCard(
                       "assets/images/gym.png",
                       "Squat Exercise",
-                      "12 Minutes",
+                      "12 Min",
                       "120 Kcal",
                     ),
                     const SizedBox(width: 16),
                     _buildWorkoutCard(
                       "assets/images/gym.png",
                       "Full Body Stretching",
-                      "12 Minutes",
+                      "12 Min",
                       "120 Kcal",
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 18.sp),
+              sizedtwenty(context),
               Text('Weekly Challenge', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
               SizedBox(height: 12.sp),
               Stack(
                 children: [
                   Container(
-                    height: 200,
+                    height: 57.sp,
                     width: double.maxFinite,
                     decoration: BoxDecoration(
                       image: DecorationImage(
@@ -80,7 +80,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   Container(
-                      height: 200,
+                      height: 57.sp,
                       width: double.maxFinite,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
@@ -108,10 +108,10 @@ class _HomePageState extends State<HomePage> {
                                     children: [
                                       Text('2/10 Complete - 20%', style: TextStyle(color: Colors.white, letterSpacing: 1)),
                                       SizedBox(
-                                        height: 10,
+                                        height: 10.sp,
                                       ),
                                       SizedBox(
-                                        width: 250,
+                                        width: 66.sp,
                                         child: LinearProgressIndicator(
                                           borderRadius: BorderRadius.circular(16),
                                           value: progress,
@@ -134,16 +134,14 @@ class _HomePageState extends State<HomePage> {
                       )),
                 ],
               ),
-              SizedBox(
-                height: 12.sp,
-              ),
+              sizedtwenty(context),
               Text('Fitness Guide', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
               SizedBox(
                 height: 12.sp,
               ),
               Container(
-                width: 160, // Adjust width
-                height: 180,
+                width: 48.sp, // Adjust width
+                height: 54.sp,
                 child: Stack(
                   children: [
                     ClipRRect(
@@ -151,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                       child: Image.asset(
                         'assets/images/challenge.png',
                         width: double.infinity,
-                        height: 140,
+                        height: 48.sp,
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -199,8 +197,8 @@ class _HomePageState extends State<HomePage> {
     String calories,
   ) {
     return Container(
-      width: 180,
-      height: 170,
+      width: 53.sp,
+      height: 52.sp,
       decoration: BoxDecoration(
         color: Colors.grey[900],
         borderRadius: BorderRadius.circular(16),
@@ -217,41 +215,41 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: Image.asset(
                   imagePath,
-                  width: 180,
-                  height: 100,
+                  width: 54.sp,
+                  height: 40.sp,
                   fit: BoxFit.cover,
                 ),
               ),
               Positioned(
-                top: 8,
-                right: 8,
+                top: 8.sp,
+                right: 10.sp,
                 child: Icon(
-                  Icons.star,
+                  Icons.star_border_rounded,
                   color: const Color(0xFFFFE600),
                 ),
               ),
-              Positioned(
-                bottom: 5,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.purple,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.play_arrow, color: Colors.white),
-                ),
-              ),
+              // Positioned(
+              //   bottom: -12.sp,
+              //   right: 10.sp,
+              //   child: Container(
+              //     padding: const EdgeInsets.all(6),
+              //     decoration: BoxDecoration(
+              //       color: Colors.purple,
+              //       shape: BoxShape.circle,
+              //     ),
+              //     child: Icon(Icons.play_arrow, color: Colors.white),
+              //   ),
+              // ),
             ],
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Color(0xFFD6FF00),
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: 15.sp,
               ),
             ),
           ),
@@ -266,7 +264,7 @@ class _HomePageState extends State<HomePage> {
                   style: const TextStyle(color: Colors.white, fontSize: 12),
                 ),
                 const SizedBox(width: 12),
-                Icon(Icons.local_fire_department, color: Colors.purple, size: 16),
+                Icon(Icons.local_fire_department, color: Colors.purple, size: 16.sp),
                 const SizedBox(width: 4),
                 Text(
                   calories,

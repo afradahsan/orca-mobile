@@ -33,15 +33,15 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return CustomDrawer(
-      controller: _drawerController,
-      backgroundColor: darkgreen,
-      minHeight: 0.0,
-      maxHeight: 0.92,
-      mainContent: _buildMainContent(),
-      drawerContent: ValueListenableBuilder(
-        valueListenable: _drawerContentNotifier,
-        builder: (context, value, _) => value,
-      ),
+        controller: _drawerController,
+        backgroundColor: darkgreen,
+        minHeight: 0.0,
+        maxHeight: 0.92,
+        mainContent: _buildMainContent(),
+        drawerContent: ValueListenableBuilder(
+          valueListenable: _drawerContentNotifier,
+          builder: (context, value, _) => value,
+        ),
     );
   }
 
@@ -52,7 +52,7 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
@@ -62,11 +62,11 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
                 child: Row(
                   children: [
                     Icon(Icons.search, color: whitet150),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8.sp),
                     Expanded(
                       child: Text(
-                        "Search for events, restaurants, movies...",
-                        style: TextStyle(color: whitet150, fontSize: 12.sp),
+                        "Search here",
+                        style: TextStyle(color: whitet150, fontSize: 14.sp),
                       ),
                     ),
                   ],
@@ -74,9 +74,8 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
               ),
             ),
 
-            // Tab Bar
             Padding(
-              padding: const EdgeInsets.only(top: 16),
+              padding: EdgeInsets.only(top: 6.sp),
               child: Container(
                 color: darkgreen,
                 child: TabBar(

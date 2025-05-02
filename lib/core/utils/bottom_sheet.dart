@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:neopop/neopop.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/core/utils/constants.dart';
 import 'package:orca/core/utils/read_more.dart';
+import 'package:orca/features/community/presentation/book_now.dart';
 import 'package:sizer/sizer.dart';
 
 class CustomDrawerController {
@@ -47,7 +49,7 @@ class CustomDrawerController {
   }
 }
 
-Widget buildDrawerContent({required String title, required String imagePath, required BuildContext context, required String location, required String duration}) {
+Widget buildTrekDrawerContent({required String title, required String imagePath, required BuildContext context, required String location, required String duration}) {
   return Column(
     children: [
       Expanded(
@@ -196,13 +198,11 @@ Widget buildDrawerContent({required String title, required String imagePath, req
                   ),
                 ),
                 sizedten(context),
-                _bulletPoint(context, "✅ Accommodation in tents or homestays"),
-                _bulletPoint(context, "✅ Veg meals – breakfast, lunch, dinner"),
-                _bulletPoint(context, "✅ Experienced trek guide"),
-                _bulletPoint(context, "✅ Permits and first-aid support"),
-
+                _bulletPoint(context, "Accommodation in tents or homestays", true),
+                _bulletPoint(context, "Veg meals – breakfast, lunch, dinner", true),
+                _bulletPoint(context, "Experienced trek guide", true),
+                _bulletPoint(context, "Permits and first-aid support", true),
                 sizedtwenty(context),
-
                 Text(
                   'What’s Not Included',
                   style: TextStyle(
@@ -214,9 +214,9 @@ Widget buildDrawerContent({required String title, required String imagePath, req
                   ),
                 ),
                 sizedten(context),
-                _bulletPoint(context, "❌ Personal expenses or insurance"),
-                _bulletPoint(context, "❌ Gear rental (sleeping bag, trekking shoes)"),
-                _bulletPoint(context, "❌ Transport to base camp"),
+                _bulletPoint(context, "Personal expenses or insurance", false),
+                _bulletPoint(context, "Gear rental (sleeping bag, trekking shoes)", false),
+                _bulletPoint(context, "Transport to base camp", false),
 
                 sizedtwenty(context),
 
@@ -244,7 +244,7 @@ Widget buildDrawerContent({required String title, required String imagePath, req
                 //       ),
                 //     ),
                 //   ),
-                // ),
+                // ),`
               ],
             ),
           ),
@@ -252,7 +252,7 @@ Widget buildDrawerContent({required String title, required String imagePath, req
       ),
       Container(
         padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
-        decoration: BoxDecoration(color: Color.fromARGB(255, 77, 103, 70)),
+        decoration: BoxDecoration(color: Color.fromARGB(255, 61, 81, 55)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -261,12 +261,353 @@ Widget buildDrawerContent({required String title, required String imagePath, req
               children: [
                 Text(
                   'Starts from',
-                  style: TextStyle(color: green, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily, fontSize: 12.sp),
+                  style: TextStyle(color: green, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily, fontSize: 13.sp, letterSpacing: 3.sp),
                 ),
                 Text(
                   '₹3999',
-                  style: TextStyle(color: green, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily, fontSize: 16.sp),
+                  style: TextStyle(color: green, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily, fontSize: 20.sp, fontWeight: FontWeight.w800, letterSpacing: 3.sp),
                 )
+              ],
+            ),
+            NeoPopButton(
+                color: darkgreen,
+                bottomShadowColor: green,
+                rightShadowColor: green,
+                onTapUp: () {},
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
+                  child: Text(
+                    'Apply Now',
+                    style: TextStyle(color: green, fontSize: 16.sp, fontWeight: FontWeight.bold, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily),
+                  ),
+                )),
+          ],
+        ),
+      )
+    ],
+  );
+}
+
+Widget buildCompetitionsDrawerContent(
+    {required String title, required String imagePath, required BuildContext context, required String location, required String time, required DateTime date, required String rules}) {
+  String formattedDate = DateFormat('EEE, dd MMMM').format(date);
+  return Column(
+    children: [
+      Expanded(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(16.sp),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ClipRRect(
+                //   borderRadius: BorderRadius.circular(12.sp),
+                //   child: Image.asset(
+                //     imagePath,
+                //     fit: BoxFit.cover,
+                //     width: double.infinity,
+                //     height: 60.sp,
+                //   ),
+                // ),
+                // sizedten(context),
+                Text(
+                  '🏏 $title',
+                  style: TextStyle(color: green, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily, fontSize: 20.sp),
+                ),
+                sizedten(context),
+                Container(
+                    // margin: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 16.sp),
+                    padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 16.sp),
+                    decoration: BoxDecoration(
+                      color: white.withAlpha(15),
+                      borderRadius: BorderRadius.circular(12.sp),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Icon(Icons.calendar_month_rounded, size: 16.sp, color: whitet150),
+                            sizedwfive(context),
+                            Text(
+                              formattedDate,
+                              style: TextStyle(decoration: TextDecoration.none, fontSize: 16.sp, fontFamily: GoogleFonts.poppins().fontFamily, color: white),
+                            ),
+                            sizedwfive(context),
+                            Container(
+                              height: 15.sp,
+                              width: 5.sp,
+                              decoration: BoxDecoration(
+                                color: white.withAlpha(100),
+                                borderRadius: BorderRadius.circular(12.sp),
+                              ),
+                            ),
+                            sizedwfive(context),
+                            Text(
+                              '$time onwards',
+                              style: TextStyle(decoration: TextDecoration.none, fontSize: 16.sp, color: white, fontFamily: GoogleFonts.poppins().fontFamily),
+                            )
+                          ],
+                        ),
+                        sizedten(context),
+                        Container(
+                          height: 3.sp,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: white.withAlpha(100),
+                            borderRadius: BorderRadius.circular(12.sp),
+                          ),
+                        ),
+                        sizedten(context),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              size: 18.sp,
+                              color: whitet150,
+                            ),
+                            sizedwfive(context),
+                            Text(location, style: TextStyle(color: white, fontSize: 16.sp, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily))
+                          ],
+                        ),
+                      ],
+                    )),
+                sizedtwenty(context),
+                Text('Rules', style: TextStyle(color: green, fontSize: 22.sp, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily)),
+                Text(
+                  rules,
+                  style: TextStyle(
+                    color: white,
+                    fontSize: 15.sp,
+                    decoration: TextDecoration.none,
+                    fontFamily: GoogleFonts.poppins().fontFamily,
+                    letterSpacing: 4.sp,
+                  ),
+                ),
+                sizedtwenty(context),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    matchInfo(context, Icons.sports_cricket_rounded, 'Match Type', 'Limited Overs'),
+                    sizedten(context),
+                    matchInfo(context, Icons.timelapse_rounded, 'No. of Overs', '12 Overs'),
+                    sizedten(context),
+                    matchInfo(context, Icons.sports_baseball_rounded, 'Ball Type', 'Tennis'),
+                    sizedten(context),
+                    matchInfo(context, Icons.person, 'Team Size', '11'),
+                  ],
+                ),
+                sizedtwenty(context),
+              ],
+            ),
+          ),
+        ),
+      ),
+      Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
+        decoration: BoxDecoration(color: Color.fromARGB(255, 61, 81, 55)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ground Fee (Per Team)',
+                  style: TextStyle(color: white, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily, fontSize: 14.sp, letterSpacing: 3.sp),
+                ),
+                Text(
+                  '₹1200',
+                  style: TextStyle(color: green, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily, fontSize: 20.sp, fontWeight: FontWeight.w800, letterSpacing: 3.sp),
+                )
+              ],
+            ),
+            NeoPopButton(
+                color: darkgreen,
+                bottomShadowColor: green,
+                rightShadowColor: green,
+                onTapUp: () {
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (context) {
+                      return const BookNow();
+                    },
+                  ));
+                },
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
+                  child: Text(
+                    'Register Now',
+                    style: TextStyle(color: green, fontSize: 16.sp, fontWeight: FontWeight.bold, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily),
+                  ),
+                )),
+          ],
+        ),
+      )
+    ],
+  );
+}
+
+Widget buildBikeRideDrawerContent({
+  required String title,
+  required BuildContext context,
+  required String startLocation,
+  required String endLocation,
+  required DateTime date,
+  required String time,
+  required String distance,
+  required String difficulty,
+  required String rideType,
+}) {
+  String formattedDate = DateFormat('EEE, dd MMMM').format(date);
+
+  return Column(
+    children: [
+      Expanded(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(16.sp),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$title',
+                  style: TextStyle(
+                    color: green,
+                    decoration: TextDecoration.none,
+                    fontFamily: GoogleFonts.poppins().fontFamily,
+                    fontSize: 20.sp,
+                  ),
+                ),
+                sizedten(context),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 16.sp),
+                  decoration: BoxDecoration(
+                    color: white.withAlpha(15),
+                    borderRadius: BorderRadius.circular(12.sp),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_month_rounded, size: 16.sp, color: whitet150),
+                          sizedwfive(context),
+                          Text(
+                            formattedDate,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: white,
+                              fontFamily: GoogleFonts.poppins().fontFamily,
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                          sizedwfive(context),
+                          Container(
+                            height: 15.sp,
+                            width: 5.sp,
+                            decoration: BoxDecoration(
+                              color: white.withAlpha(100),
+                              borderRadius: BorderRadius.circular(12.sp),
+                            ),
+                          ),
+                          sizedwfive(context),
+                          Text(
+                            '$time onwards',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: white,
+                              fontFamily: GoogleFonts.poppins().fontFamily,
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                        ],
+                      ),
+                      sizedten(context),
+                      Container(
+                        height: 3.sp,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: white.withAlpha(100),
+                          borderRadius: BorderRadius.circular(12.sp),
+                        ),
+                      ),
+                      sizedten(context),
+                      Row(
+                        children: [
+                          Icon(Icons.location_on, size: 18.sp, color: whitet150),
+                          sizedwfive(context),
+                          Expanded(
+                            child: Text(
+                              '$startLocation → $endLocation',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: white,
+                                fontFamily: GoogleFonts.poppins().fontFamily,
+                                decoration: TextDecoration.none,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                sizedtwenty(context),
+                Text(
+                  'Quick Info',
+                  style: TextStyle(
+                    color: green,
+                    fontSize: 22.sp,
+                    decoration: TextDecoration.none,
+                    fontFamily: GoogleFonts.poppins().fontFamily,
+                  ),
+                ),
+                sizedten(context),
+                Column(
+                  children: [
+                    matchInfo(context, Icons.directions_bike, 'Ride Type', rideType),
+                    sizedten(context),
+                    matchInfo(context, Icons.social_distance, 'Distance', distance),
+                    sizedten(context),
+                    matchInfo(context, Icons.whatshot, 'Difficulty', difficulty),
+                  ],
+                ),
+                sizedtwenty(context),
+              ],
+            ),
+          ),
+        ),
+      ),
+      Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
+        decoration: BoxDecoration(color: const Color.fromARGB(255, 61, 81, 55)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Participation Fee',
+                  style: TextStyle(
+                    color: white,
+                    decoration: TextDecoration.none,
+                    fontFamily: GoogleFonts.poppins().fontFamily,
+                    fontSize: 14.sp,
+                    letterSpacing: 3.sp,
+                  ),
+                ),
+                Text(
+                  '₹300',
+                  style: TextStyle(
+                    color: green,
+                    decoration: TextDecoration.none,
+                    fontFamily: GoogleFonts.poppins().fontFamily,
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 3.sp,
+                  ),
+                ),
               ],
             ),
             NeoPopButton(
@@ -276,11 +617,37 @@ Widget buildDrawerContent({required String title, required String imagePath, req
               onTapUp: () {},
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
-                child: Text('Apply Now', style: TextStyle(color: green, fontSize: 16.sp, fontWeight: FontWeight.bold, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily),
-              ),)
+                child: Text(
+                  'Register Now',
+                  style: TextStyle(
+                    color: green,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.none,
+                    fontFamily: GoogleFonts.poppins().fontFamily,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
+      )
+    ],
+  );
+}
+
+Widget matchInfo(BuildContext context, IconData icon, String title, String value) {
+  return Row(
+    children: [
+      Icon(icon, size: 20.sp, color: whitet100),
+      sizedwfive(context),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TextStyle(color: green, fontSize: 14.sp, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily, letterSpacing: 4.sp)),
+          sizedfive(context),
+          Text(value, style: TextStyle(color: white, fontSize: 16.sp, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily, letterSpacing: 4.sp))
+        ],
       )
     ],
   );
@@ -326,17 +693,23 @@ Widget _infoBlock(BuildContext context, IconData icon, String title, String valu
   );
 }
 
-Widget _bulletPoint(BuildContext context, String text) {
+Widget _bulletPoint(BuildContext context, String text, bool included) {
   return Padding(
     padding: EdgeInsets.symmetric(vertical: 4.sp),
-    child: Text(
-      text,
-      style: TextStyle(
-        fontSize: 13.sp,
-        color: white,
-        fontFamily: GoogleFonts.poppins().fontFamily,
-        decoration: TextDecoration.none,
-      ),
+    child: Row(
+      children: [
+        included ? Image.asset('assets/icons/checked.png') : Image.asset('assets/icons/close.png'),
+        sizedwfive(context),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: white,
+            fontFamily: GoogleFonts.poppins().fontFamily,
+            decoration: TextDecoration.none,
+          ),
+        ),
+      ],
     ),
   );
 }

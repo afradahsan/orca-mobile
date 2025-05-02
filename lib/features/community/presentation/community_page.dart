@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:sizer/sizer.dart';
 import 'package:orca/core/utils/bottom_sheet.dart';
 import 'package:orca/core/utils/colors.dart';
-import 'package:sizer/sizer.dart';
 
 class CommunityPage extends StatefulWidget {
   final CustomDrawerController drawerController;
@@ -39,7 +39,7 @@ class _CommunityPageState extends State<CommunityPage> {
                       onTap: () {
                         widget.drawerController.openToMin();
 
-                        widget.drawerContentNotifier.value = buildDrawerContent(
+                        widget.drawerContentNotifier.value = buildTrekDrawerContent(
                           imagePath: "assets/images/trek.jpg",
                           title: "Sar Pass Trek", context: context,
                           location: 'Himachal Pradesh, India',
@@ -58,7 +58,11 @@ class _CommunityPageState extends State<CommunityPage> {
                       duration: "7 Days",
                       difficulty: "Moderate",
                       imagePath: "assets/images/spiti.jpg",
-                      onTap: () {},
+                      onTap: () {
+                        widget.drawerController.openToMin();
+
+                        widget.drawerContentNotifier.value = buildBikeRideDrawerContent(title: 'Spiti Expedition', context: context, startLocation: 'Chandigarh', endLocation: 'Manali', date: DateTime(2025, 05, 20), time: '09:00 PM', distance: '450KM', difficulty: 'Moderate', rideType: 'Bike');
+                      },
                     ),
                   ),
                 ],
@@ -66,7 +70,7 @@ class _CommunityPageState extends State<CommunityPage> {
               SizedBox(height: 20),
               _sectionTitle("Upcoming Competitions"),
               SizedBox(height: 14.sp),
-              ChallengeCard(),
+              ChallengeCard(drawerContentNotifier: widget.drawerContentNotifier, drawerController: widget.drawerController,),
               SizedBox(height: 20),
               _sectionTitle("Trekking Guides"),
               SizedBox(height: 10),
@@ -166,41 +170,55 @@ class GuideCard extends StatelessWidget {
 }
 
 class ChallengeCard extends StatelessWidget {
+  final CustomDrawerController drawerController;
+  final ValueNotifier<Widget> drawerContentNotifier;
+  
+  const ChallengeCard({
+    Key? key,
+    required this.drawerController,
+    required this.drawerContentNotifier,
+  }) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 180,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.asset(
-              "assets/images/cricket.jpg",
-              width: double.infinity,
-              height: 180,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Container(
-            height: 180,
-            decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: () {
+        drawerController.openToMin();
+        drawerContentNotifier.value = buildCompetitionsDrawerContent(title: 'All Kerala Inter College Tournament', imagePath: 'imagePath', context: context, location: 'Greenfield International Stadium', time: "04:30PM", date: DateTime(2025, 05, 24), rules: 'Matches will follow ICC T20 format. Knockout rounds, official umpires, and scoring sheets will be provided. Bring your own gear.');
+      },
+      child: Container(
+        height: 180,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Stack(
+          children: [
+            ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+              child: Image.asset(
+                "assets/images/cricket.jpg",
+                width: double.infinity,
+                height: 180,
+                fit: BoxFit.cover,
               ),
             ),
-          ),
-          Positioned(
-            bottom: 10,
-            left: 10,
-            child: Text("Cricket Mania", style: TextStyle(color: Colors.white)),
-          ),
-        ],
+            Container(
+              height: 180,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 10,
+              left: 10,
+              child: Text("Cricket Mania", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
       ),
     );
   }
