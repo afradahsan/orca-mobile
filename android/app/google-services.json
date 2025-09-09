@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "966816861961",
+    "project_id": "osclub-orca",
+    "storage_bucket": "osclub-orca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:966816861961:android:d5dcc5447f66d2549f4dd8",
+        "android_client_info": {
+          "package_name": "com.example.orca"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "966816861961-cco82i5n5vfek461nso7rpe5754nr670.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.orca",
+            "certificate_hash": "bbf03bf0bf532d25b97f1181db9b46fd0de393c4"
+          }
+        },
+        {
+          "client_id": "966816861961-tva7k85opl4gjelj9it12vjs76n24lgg.apps.googleusercontent.com",  
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkx167vKClrxdzxEzYVv4K4a6UQe0THFE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "966816861961-tva7k85opl4gjelj9it12vjs76n24lgg.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "966816861961-5dseucupt4mh1ldsvija19g92u8j228n.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.orca"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

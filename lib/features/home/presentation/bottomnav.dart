@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:orca/core/utils/bottom_sheet.dart';
 import 'package:orca/core/utils/colors.dart';
-import 'package:orca/features/community/presentation/community_page.dart';
-import 'package:orca/features/home/presentation/home_page.dart';
+import 'package:orca/features/ecom/presentation/ecom_page.dart';
+import 'package:orca/features/fitness/data/role_provider.dart';
+import 'package:orca/features/fitness/presentations/account_fitness.dart';
+import 'package:orca/features/fitness/presentations/fitness_page.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 class NavBarPage extends StatefulWidget {
-  const NavBarPage({super.key});
+  const NavBarPage({super.key, this.initialTabIndex = 0});
+
+  final int initialTabIndex;
 
   @override
   State<NavBarPage> createState() => _NavBarPageState();
@@ -18,31 +23,58 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
   final ValueNotifier<Widget> _drawerContentNotifier = ValueNotifier(const SizedBox());
 
   final tabs = [
-    {'icon': Icons.auto_fix_high, 'label': 'For you'},
-    {'icon': Icons.emoji_events_rounded, 'label': 'Events'},
-    {'icon': Icons.fitness_center_rounded, 'label': 'Fitness'},
+    // {'icon': Icons.auto_fix_high, 'label': 'Club'},
+    {'icon': Icons.shopping_bag_rounded, 'label': 'Merch'},
+    {'icon': Icons.fitness_center_rounded, 'label': 'EFC'},
   ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: tabs.length, vsync: this);
-    _tabController.addListener(() => setState(() {}));
+    _tabController = TabController(length: tabs.length, vsync: this, initialIndex: widget.initialTabIndex);
+    debugPrint('Tab not called');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final role = Provider.of<RoleProvider>(context, listen: false).role;
+
+      _tabController.addListener(() {
+        if (_tabController.index == 1 && role == '') {
+          debugPrint('Tab: ${_tabController.index}');
+          Future.microtask(() {
+            _tabController.index = 1;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AccountFitness(),
+              ),
+            );
+          });
+        } else {
+          debugPrint('Tab changed to: ${_tabController.index}');
+        }
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return CustomDrawer(
-        controller: _drawerController,
-        backgroundColor: darkgreen,
-        minHeight: 0.0,
-        maxHeight: 0.92,
-        mainContent: _buildMainContent(),
-        drawerContent: ValueListenableBuilder(
-          valueListenable: _drawerContentNotifier,
-          builder: (context, value, _) => value,
-        ),
-    );
+    return WillPopScope(
+        onWillPop: () async {
+          if (_drawerController.isOpen) {
+            _drawerController.close();
+            return false;
+          }
+          return true;
+        },
+        child: CustomDrawer(
+            controller: _drawerController,
+            backgroundColor: darkgreen,
+            minHeight: 0.0,
+            maxHeight: 0.92,
+            mainContent: _buildMainContent(),
+            drawerContent: ValueListenableBuilder(
+              valueListenable: _drawerContentNotifier,
+              builder: (context, value, _) => value,
+            )));
   }
 
   Widget _buildMainContent() {
@@ -51,63 +83,75 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: whitet50,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.search, color: whitet150),
-                    SizedBox(width: 8.sp),
-                    Expanded(
-                      child: Text(
-                        "Search here",
-                        style: TextStyle(color: whitet150, fontSize: 14.sp),
-                      ),
-                    ),
-                  ],
-                ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: const [
+                  EcomPage(),
+                  FitnessPage(),
+                ],
               ),
             ),
+            Container(
+              height: 35.sp,
+              color: darkgreen,
+              child: TabBar(
+                controller: _tabController,
+                labelColor: green,
+                unselectedLabelColor: whitet150,
+                indicator: const BoxDecoration(),
+                onTap: (index) {
+                  final role = Provider.of<RoleProvider>(context, listen: false).role;
+                  if (index == 2 && role == '') {
+                    _tabController.animateTo(_tabController.previousIndex);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => AccountFitness()),
+                    );
+                  } else {
+                    _tabController.animateTo(index);
+                  }
+                },
+                tabs: tabs.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  var tab = entry.value;
 
-            Padding(
-              padding: EdgeInsets.only(top: 6.sp),
-              child: Container(
-                color: darkgreen,
-                child: TabBar(
-                  controller: _tabController,
-                  isScrollable: true,
-                  labelColor: green,
-                  unselectedLabelColor: whitet150,
-                  indicator: const BoxDecoration(),
-                  dividerColor: Colors.transparent,
-                  tabAlignment: TabAlignment.center,
-                  tabs: tabs.map((tab) {
+                  if (index == 2) {
+                    return Tab(
+                      iconMargin: EdgeInsets.only(bottom: 8.sp),
+                      icon: Container(
+                          width: 21.sp,
+                          height: 21.sp,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: white,
+                              width: 4.sp,
+                            ),
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: Container(
+                            width: 25.sp,
+                            height: 25.sp,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.black,
+                            ),
+                            child: ClipOval(
+                              child: Image.asset(
+                                'assets/images/spiti.jpg',
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          )),
+                      text: tab['label'] as String,
+                    );
+                  } else {
                     return Tab(
                       icon: Icon(tab['icon'] as IconData),
                       text: tab['label'] as String,
                     );
-                  }).toList(),
-                ),
-              ),
-            ),
-
-            // TabBarView Content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  const HomePage(),
-                  CommunityPage(
-                    drawerController: _drawerController,
-                    drawerContentNotifier: _drawerContentNotifier,
-                  ),
-                  Center(child: Text("Fitness", style: TextStyle(color: white))),
-                ],
+                  }
+                }).toList(),
               ),
             ),
           ],

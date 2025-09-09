@@ -5,7 +5,7 @@ import 'package:neopop/neopop.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/core/utils/constants.dart';
 import 'package:orca/core/utils/read_more.dart';
-import 'package:orca/features/community/presentation/book_now.dart';
+import 'package:orca/features/ecom/presentation/book_now.dart';
 import 'package:sizer/sizer.dart';
 
 class CustomDrawerController {
@@ -17,7 +17,7 @@ class CustomDrawerController {
     _isInitialized = true;
   }
 
-  bool get isOpen => _animationController?.value == 1.0;
+  bool get isOpen => _animationController?.value == 0.5;
 
   void open() {
     if (_isInitialized) {
@@ -66,6 +66,7 @@ Widget buildTrekDrawerContent({required String title, required String imagePath,
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: 60.sp,
+                    opacity: AlwaysStoppedAnimation(0.7),
                   ),
                 ),
                 sizedten(context),
@@ -78,7 +79,7 @@ Widget buildTrekDrawerContent({required String title, required String imagePath,
                     // margin: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 16.sp),
                     padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 16.sp),
                     decoration: BoxDecoration(
-                      color: white.withAlpha(15),
+                      color: const Color.fromARGB(70, 53, 53, 53),
                       borderRadius: BorderRadius.circular(12.sp),
                     ),
                     child: Column(
@@ -86,27 +87,27 @@ Widget buildTrekDrawerContent({required String title, required String imagePath,
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.access_time_rounded, size: 20.sp, color: whitet150),
+                            Icon(Icons.access_time_rounded, size: 20.sp, color: Color(0xFF8b7a6b)),
                             sizedwfive(context),
                             Text(
                               duration,
-                              style: TextStyle(decoration: TextDecoration.none, fontSize: 18.sp, fontFamily: GoogleFonts.poppins().fontFamily, color: white),
+                              style: TextStyle(decoration: TextDecoration.none, fontSize: 18.sp, fontFamily: GoogleFonts.poppins().fontFamily, color: green),
                             ),
                             sizedwten(context),
                             Container(
                               height: 20.sp,
                               width: 5.sp,
                               decoration: BoxDecoration(
-                                color: white.withAlpha(100),
+                                color: Color(0xFF8b7a6b),
                                 borderRadius: BorderRadius.circular(12.sp),
                               ),
                             ),
                             sizedwten(context),
-                            Icon(Icons.tsunami, size: 20.sp, color: whitet150),
+                            Icon(Icons.tsunami, size: 20.sp, color: Color(0xFF8b7a6b)),
                             sizedwfive(context),
                             Text(
                               duration,
-                              style: TextStyle(decoration: TextDecoration.none, fontSize: 18.sp, color: white, fontFamily: GoogleFonts.poppins().fontFamily),
+                              style: TextStyle(decoration: TextDecoration.none, fontSize: 18.sp, color: green, fontFamily: GoogleFonts.poppins().fontFamily),
                             )
                           ],
                         ),
@@ -115,7 +116,7 @@ Widget buildTrekDrawerContent({required String title, required String imagePath,
                           height: 5.sp,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: white.withAlpha(100),
+                            color: Color(0xFF8b7a6b),
                             borderRadius: BorderRadius.circular(12.sp),
                           ),
                         ),
@@ -126,10 +127,10 @@ Widget buildTrekDrawerContent({required String title, required String imagePath,
                             Icon(
                               Icons.location_on,
                               size: 20.sp,
-                              color: whitet150,
+                              color: Color(0xFF8b7a6b),
                             ),
                             sizedwfive(context),
-                            Text(location, style: TextStyle(color: white, fontSize: 18.sp, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily))
+                            Text(location, style: TextStyle(color: green, fontSize: 18.sp, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily))
                           ],
                         ),
                       ],
@@ -252,7 +253,7 @@ Widget buildTrekDrawerContent({required String title, required String imagePath,
       ),
       Container(
         padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
-        decoration: BoxDecoration(color: Color.fromARGB(255, 61, 81, 55)),
+        decoration: BoxDecoration(color: darkgreen),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -270,7 +271,7 @@ Widget buildTrekDrawerContent({required String title, required String imagePath,
               ],
             ),
             NeoPopButton(
-                color: darkgreen,
+                color: Color(0xFF8b7a6b),
                 bottomShadowColor: green,
                 rightShadowColor: green,
                 onTapUp: () {},
@@ -278,7 +279,7 @@ Widget buildTrekDrawerContent({required String title, required String imagePath,
                   padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
                   child: Text(
                     'Apply Now',
-                    style: TextStyle(color: green, fontSize: 16.sp, fontWeight: FontWeight.bold, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily),
+                    style: TextStyle(color:green, fontSize: 16.sp, fontWeight: FontWeight.bold, decoration: TextDecoration.none, fontFamily: GoogleFonts.poppins().fontFamily),
                   ),
                 )),
           ],
@@ -659,13 +660,13 @@ Widget _infoBlock(BuildContext context, IconData icon, String title, String valu
     width: 53.sp,
     padding: EdgeInsets.symmetric(horizontal: 21.sp, vertical: 8.sp),
     decoration: BoxDecoration(
-      color: white.withAlpha(15),
+      color: Color.fromARGB(70, 53, 53, 53),
       borderRadius: BorderRadius.circular(8.sp),
     ),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        Icon(icon, color: green, size: 20.sp),
+        Icon(icon, color: Color(0xFF8b7a6b), size: 20.sp),
         sizedwfive(context),
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -674,7 +675,7 @@ Widget _infoBlock(BuildContext context, IconData icon, String title, String valu
             Text(title,
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: white,
+                  color: green,
                   fontFamily: GoogleFonts.poppins().fontFamily,
                   decoration: TextDecoration.none,
                 )),
@@ -698,7 +699,12 @@ Widget _bulletPoint(BuildContext context, String text, bool included) {
     padding: EdgeInsets.symmetric(vertical: 4.sp),
     child: Row(
       children: [
-        included ? Image.asset('assets/icons/checked.png') : Image.asset('assets/icons/close.png'),
+        included
+            ? Image.asset(
+                'assets/icons/checked.png',
+                height: 15.sp,
+              )
+            : Image.asset('assets/icons/close.png', height: 15.sp),
         sizedwfive(context),
         Text(
           text,

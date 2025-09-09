@@ -38,7 +38,7 @@ class _ReadMoreState extends State<ReadMore> {
           child: Text(
             _isExpanded ? "Read less" : "Read more...",
             style: TextStyle(
-              color: green,
+              color: Color(0xFF8b7a6b),
               fontSize: 15.sp,
               fontWeight: FontWeight.w500,
               decoration: TextDecoration.none,

@@ -1,0 +1,2 @@
+C:/FLUTTER PROJECTS/orca/android/app/.cxx/Debug/v471q366/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/FLUTTER PROJECTS/orca/android/app/.cxx/Debug/v471q366/armeabi-v7a/CMakeFiles/rebuild_cache.dir

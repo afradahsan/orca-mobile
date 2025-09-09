@@ -34,11 +34,11 @@ class _SplashScreenState extends State<SplashScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'ORCA',
+                  'OS',
                   style: TextStyle(fontSize: 32.0, fontWeight: FontWeight.w800, color: green, fontStyle: FontStyle.italic),
                 ),
                 Text(
-                  'SPORTS',
+                  'CLUB',
                   style: TextStyle(fontSize: 32.0, fontWeight: FontWeight.w400, color: green, fontStyle: FontStyle.italic),
                 ),
               ],

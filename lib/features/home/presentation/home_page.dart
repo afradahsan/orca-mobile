@@ -30,40 +30,6 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Text('Recommendations', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  Text('View All', style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.bold)),
-                  Icon(
-                    Icons.arrow_right,
-                    size: 20.sp,
-                    color: green,
-                  )
-                ],
-              ),
-              SizedBox(height: 12.sp),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildWorkoutCard(
-                      "assets/images/gym.png",
-                      "Squat Exercise",
-                      "12 Min",
-                      "120 Kcal",
-                    ),
-                    const SizedBox(width: 16),
-                    _buildWorkoutCard(
-                      "assets/images/gym.png",
-                      "Full Body Stretching",
-                      "12 Min",
-                      "120 Kcal",
-                    ),
-                  ],
-                ),
-              ),
-              sizedtwenty(context),
               Text('Weekly Challenge', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
               SizedBox(height: 12.sp),
               Stack(
@@ -135,54 +101,43 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               sizedtwenty(context),
-              Text('Fitness Guide', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
-              SizedBox(
-                height: 12.sp,
-              ),
+              Text('Share the Pride', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
+              SizedBox(height: 12.sp),
               Container(
-                width: 48.sp, // Adjust width
-                height: 54.sp,
+                height: 180,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Stack(
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.asset(
-                        'assets/images/challenge.png',
+                        "assets/images/spiti.jpg",
                         width: double.infinity,
-                        height: 48.sp,
+                        height: 180,
                         fit: BoxFit.cover,
                       ),
                     ),
-
-                    // Star Icon (Favorite)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Icon(
-                        Icons.bookmark,
-                        color: green,
-                        size: 24,
+                    Container(
+                      height: 180,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+                        ),
                       ),
                     ),
-
-                    // Title Text
                     Positioned(
                       bottom: 10,
                       left: 10,
-                      right: 10,
-                      child: Text(
-                        'Calisthenics Workout!',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      child: Text("Leh - Ladakh Road Trip", style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),

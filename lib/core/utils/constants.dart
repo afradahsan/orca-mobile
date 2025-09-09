@@ -21,7 +21,7 @@ SizedBox sizedtwenty(BuildContext context) {
 
 SizedBox sizedwten(BuildContext context) {
   return SizedBox(
-    width: 6.4.w,
+    width: 3.2.w,
   );
 }
 
@@ -33,6 +33,6 @@ SizedBox sizedwfive(BuildContext context) {
 
 SizedBox sizedwtwenty(BuildContext context) {
   return SizedBox(
-    width: 3.2.w,
+    width: 6.4.w,
   );
 }

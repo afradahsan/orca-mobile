@@ -4,6 +4,8 @@ import 'package:neopop/neopop.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/features/auth/presentation/age_select.dart';
 import 'package:orca/features/auth/presentation/login_page.dart';
+import 'package:orca/features/auth/presentation/phone_number.dart';
+import 'package:orca/features/auth/presentation/signup_page.dart';
 import 'package:orca/features/home/presentation/bottomnav.dart';
 import 'package:sizer/sizer.dart';
 
@@ -46,7 +48,7 @@ class _GetStartedState extends State<GetStarted> {
                             grandparentColor: green,
                             shadowColor: green,
                             onTapUp: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => AgeSelectionScreen()));
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => PhoneNumber()));
                             },
                             child: Padding(
                               padding: EdgeInsets.symmetric(
@@ -68,9 +70,9 @@ class _GetStartedState extends State<GetStarted> {
                             SizedBox(height: 14.sp,),
                             GestureDetector(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => NavBarPage()),
+                                Navigator.pushAndRemoveUntil(
+                                  context, 
+                                  MaterialPageRoute(builder: (context) => NavBarPage()), (route) => false
                                 );
                               },
                               child: RichText(
@@ -84,7 +86,7 @@ class _GetStartedState extends State<GetStarted> {
                                         color: green,
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.bold,
-                                        fontFamily: GoogleFonts.poppins().fontFamily
+                                        fontFamily: GoogleFonts.poppins().fontFamily,
                                       ),
                                     ),
                                   ],
