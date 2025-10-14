@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:966816861961:android:d5dcc5447f66d2549f4dd8",
         "android_client_info": {
-          "package_name": "com.example.orca"
+          "package_name": "com.orca.osclub"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "966816861961-cco82i5n5vfek461nso7rpe5754nr670.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.orca",
+            "package_name": "com.orca.osclub",
             "certificate_hash": "bbf03bf0bf532d25b97f1181db9b46fd0de393c4"
           }
         },
@@ -42,7 +42,7 @@
               "client_id": "966816861961-5dseucupt4mh1ldsvija19g92u8j228n.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.orca"
+                "bundle_id": "com.orca.osclub"
               }
             }
           ]

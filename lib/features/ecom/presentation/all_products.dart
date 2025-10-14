@@ -69,8 +69,8 @@ class _AllProductsPageState extends State<AllProductsPage> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: Image.asset(
-                          p.imageUrl,
+                        child: Image.network(
+                          p.images[0],
                           width: double.infinity,
                           height: 140,
                           fit: BoxFit.cover,
@@ -95,7 +95,7 @@ class _AllProductsPageState extends State<AllProductsPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(p.title,
+                            Text(p.name,
                                 style: KTextTheme.dottedDark.bodyLarge),
                             Text(p.price,
                                 style: KTextTheme.dottedDark.bodySmall),

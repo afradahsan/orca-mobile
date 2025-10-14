@@ -1,31 +1,30 @@
-import 'package:orca/features/ecom/data/product_model.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../data/product_model.dart';
 
 class ProductService {
-  Future<List<Product>> fetchAllProducts() async {
-    final List<Map<String, dynamic>> data = [
-      {
-        "id": "p1",
-        "title": "Resistance Bands",
-        "price": "699",
-        "imageUrl": "assets/images/Puma-magmax.png",
-        "category": "equipment"
-      },
-      {
-        "id": "p2",
-        "title": "Whey Protein",
-        "price": "1999",
-        "imageUrl": "assets/images/Puma-magmax.png",
-        "category": "supplement"
-      },
-      {
-        "id": "p3",
-        "title": "Orca Tee",
-        "price": "499",
-        "imageUrl": "assets/images/Puma-magmax.png",
-        "category": "merch"
-      },
-    ];
+  final String baseUrl = 'https://orca-1-nie0.onrender.com/api/user/shop-products';
 
-    return data.map((e) => Product.fromJson(e)).toList();
+  Future<List<Product>> fetchAllProducts() async {
+    final uri = Uri.parse(baseUrl);
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      print('success: ${response.statusCode}');
+      print('success: ${response.body}');
+      final data = json.decode(response.body);
+
+      if (data['products'] == null) {
+        print('No products key found in response!');
+        return [];
+      }
+
+      final List products = data['products'];
+      print('✅ Parsed ${products.length} products');
+      return products.map((e) => Product.fromJson(e)).toList();
+    } else {
+      print('Failed with status ${response.statusCode}');
+      throw Exception('Failed to load products');
+    }
   }
 }

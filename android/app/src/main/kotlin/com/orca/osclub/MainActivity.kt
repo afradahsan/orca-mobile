@@ -1,4 +1,4 @@
-package com.example.orca
+package com.orca.osclub
 
 import io.flutter.embedding.android.FlutterActivity
 

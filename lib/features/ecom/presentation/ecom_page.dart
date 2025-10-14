@@ -25,7 +25,9 @@ class _EcomPageState extends State<EcomPage> {
   @override
   void initState() {
     super.initState();
+    debugPrint('in initstate ecom');
     _futureProducts = _service.fetchAllProducts();
+    debugPrint('future products - $_futureProducts');
   }
 
   searchBar() {
@@ -57,13 +59,20 @@ class _EcomPageState extends State<EcomPage> {
     return Scaffold(
       backgroundColor: darkgreen,
       body: FutureBuilder<List<Product>>(
-        future: _futureProducts,
+        future: ProductService().fetchAllProducts(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: green,));
+          } else if (snapshot.hasError) {
+            debugPrint('statement has error - ${snapshot.error}');
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            debugPrint('statement no data - ${snapshot.data}');
+            return const Center(child: Text('No products found', style: TextStyle(color: green),));
           }
 
           final products = snapshot.data!;
+          print('✅ snapshot data - ${products.length} items');
 
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -160,14 +169,11 @@ class _EcomPageState extends State<EcomPage> {
                 const SizedBox(height: 20),
                 _sectionTitle("SUPPLEMENTS"),
                 SizedBox(height: 4.sp),
-                ...products.where((e) => e.category == 'supplement').map((e) => Padding(
+                ...products.where((e) => e.category == '67d28c34b0a6538d1cd82f2b').map((e) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _smallProductCard(e),
                     )),
-                ...products.where((e) => e.category == 'supplement').map((e) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _smallProductCard(e),
-                    )),
+                
               ],
             ),
           );
@@ -201,11 +207,11 @@ class _EcomPageState extends State<EcomPage> {
     return GestureDetector(
       onTap: () {
         Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => ProductDetailsPage(
-                      product: p,
-                    )));
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductDetailsPage(product: p),
+          ),
+        );
       },
       child: Container(
         height: 60.sp,
@@ -214,7 +220,12 @@ class _EcomPageState extends State<EcomPage> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.asset(p.imageUrl, width: double.infinity, height: 130.sp, fit: BoxFit.cover),
+              child: Image.network(
+                p.images.isNotEmpty ? p.images.first : 'https://via.placeholder.com/150',
+                width: double.infinity,
+                height: 130.sp,
+                fit: BoxFit.cover,
+              ),
             ),
             Container(
               decoration: BoxDecoration(
@@ -230,8 +241,13 @@ class _EcomPageState extends State<EcomPage> {
               bottom: 8,
               left: 8,
               child: Text(
-                p.title,
-                style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold, fontFamily: 'Doto'),
+                p.name,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Doto',
+                ),
               ),
             ),
           ],

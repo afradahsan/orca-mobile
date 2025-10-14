@@ -83,7 +83,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   // Optional: feedback
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text("${widget.product.title} added to cart", style: KTextTheme.dottedDark.bodyMedium,),
+                      content: Text("${widget.product.name} added to cart", style: KTextTheme.dottedDark.bodyMedium,),
                       duration: const Duration(milliseconds: 800),
                     ),
                   );
@@ -133,7 +133,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           onPressed: () => Navigator.pop(context),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-        title: Text(widget.product.title, style: KTextTheme.dottedDark.titleMedium),
+        title: Text(widget.product.name, style: KTextTheme.dottedDark.titleMedium),
         titleSpacing: 2.sp,
       ),
       body: Stack(
@@ -145,8 +145,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    widget.product.imageUrl,
+                  child: Image.network(
+                    widget.product.images[0],
                     width: double.infinity,
                     height: 35.h,
                     fit: BoxFit.cover,
@@ -154,7 +154,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 ),
                 SizedBox(height: 16.sp),
                 Text(
-                  widget.product.title,
+                  widget.product.name,
                   style: KTextTheme.dottedDark.titleLarge,
                 ),
                 sizedfive(context),
@@ -171,7 +171,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         color: green,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text('Member Price - ₹${widget.product.price}', style: TextStyle(fontSize: 14.sp, color: Colors.black)),
+                      child: Text('Member Price - ₹${(double.parse(widget.product.price)-250).toInt()}', style: TextStyle(fontSize: 14.sp, color: Colors.black)),
                     ),
                   ],
                 ),

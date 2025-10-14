@@ -32,8 +32,8 @@ class ProductCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                product.imageUrl,
+              child: Image.network(
+                product.images[0],
                 width: double.infinity,
                 height: 160,
                 fit: BoxFit.cover,
@@ -51,14 +51,13 @@ class ProductCard extends StatelessWidget {
               ),
             ),
 
-            // 🔻 TITLE + PRICE (optional)
             Positioned(
               bottom: 10,
               left: 10,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(product.title,
+                  Text(product.name,
                        style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.bold, fontFamily: 'Doto')),
                   if (showPrice) ...[
                     const SizedBox(height: 4),

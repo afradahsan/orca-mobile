@@ -33,26 +33,26 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
     super.initState();
     _tabController = TabController(length: tabs.length, vsync: this, initialIndex: widget.initialTabIndex);
     debugPrint('Tab not called');
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final role = Provider.of<RoleProvider>(context, listen: false).role;
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   final role = Provider.of<RoleProvider>(context, listen: false).role;
 
-      _tabController.addListener(() {
-        if (_tabController.index == 1 && role == '') {
-          debugPrint('Tab: ${_tabController.index}');
-          Future.microtask(() {
-            _tabController.index = 1;
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => AccountFitness(),
-              ),
-            );
-          });
-        } else {
-          debugPrint('Tab changed to: ${_tabController.index}');
-        }
-      });
-    });
+    //   _tabController.addListener(() {
+    //     if (_tabController.index == 1 && role == '') {
+    //       debugPrint('Tab: ${_tabController.index}');
+    //       Future.microtask(() {
+    //         _tabController.index = 1;
+    //         Navigator.push(
+    //           context,
+    //           MaterialPageRoute(
+    //             builder: (_) => AccountFitness(),
+    //           ),
+    //         );
+    //       });
+    //     } else {
+    //       debugPrint('Tab changed to: ${_tabController.index}');
+    //     }
+    //   });
+    // });
   }
 
   @override
@@ -102,15 +102,7 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
                 indicator: const BoxDecoration(),
                 onTap: (index) {
                   final role = Provider.of<RoleProvider>(context, listen: false).role;
-                  if (index == 2 && role == '') {
-                    _tabController.animateTo(_tabController.previousIndex);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => AccountFitness()),
-                    );
-                  } else {
                     _tabController.animateTo(index);
-                  }
                 },
                 tabs: tabs.asMap().entries.map((entry) {
                   int index = entry.key;

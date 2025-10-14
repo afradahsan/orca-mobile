@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:orca/features/fitness/data/challenge_model.dart';
+import 'package:orca/features/fitness/data/challenge_task_model.dart';
+import 'package:orca/features/fitness/data/exercise_model.dart';
+import 'package:orca/features/fitness/data/guide_model.dart';
 
 class GymOwnerPage extends StatefulWidget {
   const GymOwnerPage({super.key});
@@ -11,9 +15,9 @@ class _GymOwnerPageState extends State<GymOwnerPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  List<Map<String, dynamic>> exercises = [];
-  List<Map<String, dynamic>> guides = [];
-  List<Map<String, dynamic>> challenges = [];
+  List<Exercise> exercises = [];
+  List<Challenge> challenges = [];
+  List<Guide> guides = [];
 
   @override
   void initState() {
@@ -58,8 +62,8 @@ class _GymOwnerPageState extends State<GymOwnerPage>
             ),
             ...exercises.map((e) => Card(
                   child: ListTile(
-                    title: Text(e["title"]),
-                    subtitle: Text("${e["duration"]} | ${e["calories"]} kcal"),
+                    title: Text(e.title),
+                    subtitle: Text("${e.duration} | ${e.calories} kcal"),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () {
@@ -82,8 +86,8 @@ class _GymOwnerPageState extends State<GymOwnerPage>
             ),
             ...challenges.map((c) => Card(
                   child: ListTile(
-                    title: Text(c["title"]),
-                    subtitle: Text("${c["startDate"]} → ${c["endDate"]}"),
+                    title: Text(c.title),
+                    subtitle: Text("${c.startDate} → ${c.endDate}"),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () {
@@ -106,8 +110,8 @@ class _GymOwnerPageState extends State<GymOwnerPage>
             ),
             ...guides.map((g) => Card(
                   child: ListTile(
-                    title: Text(g["title"]),
-                    subtitle: Text(g["category"]),
+                    title: Text(g.title),
+                    subtitle: Text(g.category),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () {
@@ -127,7 +131,7 @@ class _GymOwnerPageState extends State<GymOwnerPage>
   void _addExerciseForm() {
     String title = "";
     String duration = "";
-    String calories = "";
+    int calories = 0;
     String difficulty = "Beginner";
     String description = "";
 
@@ -150,7 +154,8 @@ class _GymOwnerPageState extends State<GymOwnerPage>
                   ),
                   TextField(
                     decoration: const InputDecoration(labelText: "Calories Burned"),
-                    onChanged: (val) => calories = val,
+                    keyboardType: TextInputType.number,
+                    onChanged: (val) => calories = int.tryParse(val) ?? 0,
                   ),
                   DropdownButton<String>(
                     value: difficulty,
@@ -170,13 +175,16 @@ class _GymOwnerPageState extends State<GymOwnerPage>
               TextButton(
                 onPressed: () {
                   setState(() {
-                    exercises.add({
-                      "title": title,
-                      "duration": duration,
-                      "calories": calories,
-                      "difficulty": difficulty,
-                      "description": description,
-                    });
+                    exercises.add(Exercise(
+                      id: '1',
+                      category: 'cat',
+                      steps: ['22', '11'],
+                      title: title,
+                      duration: duration,
+                      calories: calories,
+                      difficulty: difficulty,
+                      description: description,
+                    ));
                   });
                   Navigator.pop(context);
                 },
@@ -225,12 +233,15 @@ class _GymOwnerPageState extends State<GymOwnerPage>
             TextButton(
               onPressed: () {
                 setState(() {
-                  challenges.add({
-                    "title": title,
-                    "desc": desc,
-                    "startDate": startDate,
-                    "endDate": endDate,
-                  });
+                  challenges.add(Challenge(
+                    id: '1',
+                    target: 12,
+                    tasks: [ChallengeTask(id: '1', day: 'day', taskName: 'taskName')],
+                    title: title,
+                    description: desc,
+                    startDate: DateTime(2025, 1,1,1),
+                    endDate: DateTime(2025, 1,1,1),
+                  ));
                 });
                 Navigator.pop(context);
               },
@@ -268,10 +279,11 @@ class _GymOwnerPageState extends State<GymOwnerPage>
             TextButton(
               onPressed: () {
                 setState(() {
-                  guides.add({
-                    "title": title,
-                    "category": category,
-                  });
+                  guides.add(Guide(
+                    title: title,
+                    category: category,
+                    pdfUrl: "", id: '', duration: '', // will be updated when file upload is added
+                  ));
                 });
                 Navigator.pop(context);
               },

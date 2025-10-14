@@ -61,7 +61,7 @@ class DefaultFirebaseOptions {
     projectId: 'osclub-orca',
     storageBucket: 'osclub-orca.firebasestorage.app',
     iosClientId: '966816861961-5dseucupt4mh1ldsvija19g92u8j228n.apps.googleusercontent.com',
-    iosBundleId: 'com.example.orca',
+    iosBundleId: 'com.orca.osclub',
   );
 
   static const FirebaseOptions web = FirebaseOptions(

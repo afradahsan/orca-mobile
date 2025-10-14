@@ -11,6 +11,7 @@ import 'package:orca/features/fitness/presentations/all_workouts.dart';
 import 'package:orca/features/fitness/presentations/fitness_guide.dart';
 import 'package:orca/features/fitness/presentations/weekly_challenge.dart';
 import 'package:orca/features/fitness/presentations/workout_page.dart';
+import 'package:orca/features/home/presentation/profile_page.dart';
 import 'package:sizer/sizer.dart';
 
 class FitnessPage extends StatefulWidget {
@@ -32,6 +33,7 @@ class _FitnessPageState extends State<FitnessPage> {
       duration: "12 Min",
       difficulty: "Beginner",
       steps: ["Stand straight", "Bend knees", "Repeat"],
+      calories: 45,
     ),
     Exercise(
       id: "2",
@@ -40,6 +42,7 @@ class _FitnessPageState extends State<FitnessPage> {
       duration: "12 Min",
       difficulty: "Beginner",
       steps: ["Stretch arms", "Hold pose", "Repeat"],
+      calories: 45,
     ),
   ];
 
@@ -65,13 +68,13 @@ class _FitnessPageState extends State<FitnessPage> {
         ChallengeTask(id: "t1", day: "Monday", taskName: "Do 30 pushups"),
         ChallengeTask(id: "t2", day: "Tuesday", taskName: "15 min Run"),
       ],
+      startDate: DateTime(2025, 09, 11),
+      endDate: DateTime(2025, 09, 11),
     );
-    progress = weeklyChallenge.target > 0
-        ? weeklyChallenge.progress / weeklyChallenge.target
-        : 0;
+    progress = weeklyChallenge.target > 0 ? weeklyChallenge.progress / weeklyChallenge.target : 0;
   }
 
-  void _onIconTap(int index) {
+  void onIconTap(int index) {
     setState(() {
       selectedIndex = index;
     });
@@ -94,31 +97,21 @@ class _FitnessPageState extends State<FitnessPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         sizedfive(context),
-                        Text('Hey Afrad!',
-                            style: TextStyle(
-                                color: white,
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.bold)),
-                        Text('Ready to Grind?',
-                            style: TextStyle(
-                                color: green,
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.bold,
-                                fontStyle: FontStyle.italic)),
+                        Text('Hey Afrad!', style: TextStyle(color: white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
+                        Text('Ready to Grind?', style: TextStyle(color: green, fontSize: 18.sp, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
                         sizedten(context),
                       ],
                     ),
                     GestureDetector(
                       onTap: () {
                         Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => const AccountFitness(),
+                          builder: (context) => const ProfilePage(),
                         ));
                       },
                       child: CircleAvatar(
                         radius: 18.sp,
                         backgroundColor: Colors.transparent,
-                        backgroundImage:
-                            const AssetImage('assets/images/gym.png'),
+                        backgroundImage: const AssetImage('assets/images/gym.png'),
                       ),
                     )
                   ],
@@ -130,26 +123,17 @@ class _FitnessPageState extends State<FitnessPage> {
                 // Explore
                 Row(
                   children: [
-                    Text('Explore',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold)),
+                    Text('Explore', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
                     const Spacer(),
                     GestureDetector(
                       onTap: () {
                         Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) =>
-                              AllWorkouts(),
+                          builder: (context) => AllWorkouts(),
                         ));
                       },
                       child: Row(
                         children: [
-                          Text('View All',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.bold)),
+                          Text('View All', style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.bold)),
                           Icon(Icons.arrow_right, size: 20.sp, color: green),
                         ],
                       ),
@@ -168,7 +152,7 @@ class _FitnessPageState extends State<FitnessPage> {
                           "assets/images/gym.png",
                           ex.title,
                           ex.duration,
-                          "120 Kcal", 
+                          "120 Kcal",
                         ),
                       );
                     }).toList(),
@@ -177,17 +161,12 @@ class _FitnessPageState extends State<FitnessPage> {
 
                 sizedtwenty(context),
 
-                Text('Weekly Challenge',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold)),
+                Text('Weekly Challenge', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
                 SizedBox(height: 12.sp),
                 GestureDetector(
                   onTap: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) =>
-                          WeeklyChallenge(),
+                      builder: (context) => WeeklyChallenge(),
                     ));
                   },
                   child: Stack(
@@ -223,17 +202,13 @@ class _FitnessPageState extends State<FitnessPage> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Padding(
-                                padding: EdgeInsets.only(
-                                    bottom: 16.sp, left: 14.sp),
+                                padding: EdgeInsets.only(bottom: 16.sp, left: 14.sp),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                        '${weeklyChallenge.progress}/${weeklyChallenge.target} Complete - ${(progress * 100).toInt()}%',
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            letterSpacing: 1)),
+                                    Text('${weeklyChallenge.progress}/${weeklyChallenge.target} Complete - ${(progress * 100).toInt()}%',
+                                        style: const TextStyle(color: Colors.white, letterSpacing: 1)),
                                     SizedBox(height: 10.sp),
                                     SizedBox(
                                       width: 66.sp,
@@ -241,9 +216,7 @@ class _FitnessPageState extends State<FitnessPage> {
                                         borderRadius: BorderRadius.circular(16),
                                         value: progress,
                                         backgroundColor: green.withOpacity(0.4),
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                                green),
+                                        valueColor: AlwaysStoppedAnimation<Color>(green),
                                       ),
                                     ),
                                   ],
@@ -251,10 +224,8 @@ class _FitnessPageState extends State<FitnessPage> {
                               ),
                               const Spacer(),
                               Padding(
-                                padding: EdgeInsets.only(
-                                    bottom: 12.sp, right: 14.sp),
-                                child: const Icon(Icons.arrow_forward,
-                                    color: Colors.white),
+                                padding: EdgeInsets.only(bottom: 12.sp, right: 14.sp),
+                                child: const Icon(Icons.arrow_forward, color: Colors.white),
                               ),
                             ],
                           ),
@@ -266,11 +237,7 @@ class _FitnessPageState extends State<FitnessPage> {
 
                 sizedtwenty(context),
 
-                Text('Fitness Guide',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold)),
+                Text('Fitness Guide', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
                 SizedBox(height: 12.sp),
                 GestureDetector(
                   onTap: () {
@@ -324,14 +291,27 @@ class _FitnessPageState extends State<FitnessPage> {
   }
 
   Widget dailyTracker() {
-    final List<String> days = ['M', 'T', 'W', 'T', 'F', 'S'];
-    final List<int> status = [3, 3, 2, 1, 0, 0, 0];
+    final List<String> days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    List<int> status = List.filled(7, 0);
+
+    int today = DateTime.now().weekday; // 1-7
+    int todayIndex = today - 1; // convert to 0–6 index
+
+    for (int i = 0; i < days.length; i++) {
+      if (i < todayIndex) {
+        status[i] = 3; // completed
+      } else if (i == todayIndex) {
+        status[i] = 1; // active
+      } else {
+        status[i] = 0; // upcoming
+      }
+    }
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 12.sp),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15.sp),
-        color: Color(0xFF121212),
+        color: const Color(0xFF121212),
         border: Border.all(color: Colors.grey.shade800, width: 1),
       ),
       child: Row(
@@ -342,22 +322,22 @@ class _FitnessPageState extends State<FitnessPage> {
           Color textColor;
 
           switch (status[index]) {
-            case 3: // Completed (e.g. Red border)
+            case 3: // Completed
               borderColor = const Color.fromARGB(255, 0, 255, 8);
               fillColor = Colors.transparent;
               textColor = Colors.white;
               break;
-            case 2: // Completed (e.g. Red border)
+            case 2: // Missed
               borderColor = Colors.redAccent;
               fillColor = Colors.transparent;
               textColor = Colors.white;
               break;
-            case 1: // Active (e.g. Purple filled)
+            case 1: // Active (today)
               borderColor = Colors.white;
               fillColor = Colors.deepPurple;
               textColor = Colors.white;
               break;
-            default: // Upcoming (e.g. Grey border)
+            default: // Upcoming
               borderColor = Colors.grey.shade700;
               fillColor = Colors.transparent;
               textColor = Colors.white;
@@ -376,7 +356,7 @@ class _FitnessPageState extends State<FitnessPage> {
               days[index],
               style: TextStyle(
                 color: textColor,
-                fontFamily: GoogleFonts.bebasNeue().fontFamily, 
+                fontFamily: GoogleFonts.bebasNeue().fontFamily,
                 fontSize: 15.sp,
                 fontWeight: FontWeight.bold,
               ),

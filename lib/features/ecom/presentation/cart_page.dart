@@ -56,14 +56,14 @@ class _CartPageState extends State<CartPage> {
                   leading: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: Image.asset(
-                      item.product.imageUrl,
+                      item.product.images[index],
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
                     ),
                   ),
                   title: Text(
-                    item.product.title,
+                    item.product.name,
                     style: KTextTheme.dottedDark.bodyLarge,
                   ),
                   subtitle: Text(
