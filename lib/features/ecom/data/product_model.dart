@@ -7,7 +7,7 @@ class Product {
   final String brand;
   final String material;
   final List<String> images;
-  final String category;
+final Map<String, dynamic> category;
   final double rating;
   final String status;
   final List<ProductSize> sizes;
@@ -37,7 +37,7 @@ class Product {
       brand: json['brand'] ?? '',
       material: json['material'] ?? '',
       images: List<String>.from(json['images'] ?? []),
-      category: json['category'] ?? '',
+      category: json['category'] ?? {},
       rating: (json['rating'] ?? 0).toDouble(),
       status: json['status'] ?? '',
       sizes: (json['sizes'] as List? ?? [])

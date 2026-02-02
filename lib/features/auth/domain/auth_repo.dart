@@ -13,47 +13,40 @@ class AuthRepo {
   Future<User?> handleSignIn() async {
     try {
       await signIn.initialize(
-          serverClientId:
-              "966816861961-tva7k85opl4gjelj9it12vjs76n24lgg.apps.googleusercontent.com");
-
+        serverClientId: "966816861961-tva7k85opl4gjelj9it12vjs76n24lgg.apps.googleusercontent.com",
+      );
       final account = await signIn.authenticate();
-      if (account == null) {
-        debugPrint('null acc');
-        return null;
-      }
+      if (account == null) return null;
 
       final auth = await account.authentication;
       final credential = GoogleAuthProvider.credential(idToken: auth.idToken);
       final userCredential = await _auth.signInWithCredential(credential);
       return userCredential.user;
     } on GoogleSignInException catch (e) {
-      debugPrint(e.code == GoogleSignInExceptionCode.canceled
-          ? 'Sign in aborted by user'
-          : 'Sign in failed: $e');
+      debugPrint('Google sign in failed: $e');
       return null;
     }
   }
 
   Future<void> signOut() async {
-    await GoogleSignIn.instance.signOut();
+    await signIn.signOut();
     await _auth.signOut();
   }
- 
+
+  Future<bool> checkUserExistence(String phone) async {
+    debugPrint('checking user existence for phone: $phone');
+    return await authServices.checkUserByPhone(phone);
+  }
+
   Future<Map<String, dynamic>> login({
     String? email,
     String? phone,
     required String password,
   }) async {
     if (email != null && email.isNotEmpty) {
-      return await authServices.loginWithEmail(
-        email: email,
-        password: password,
-      );
+      return await authServices.loginWithPhone(phone: email, password: password);
     } else if (phone != null && phone.isNotEmpty) {
-      return await authServices.loginWithPhone(
-        phone: phone,
-        password: password,
-      );
+      return await authServices.loginWithPhone(phone: phone, password: password);
     } else {
       throw Exception("Either email or phone must be provided");
     }

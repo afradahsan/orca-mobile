@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/features/auth/data/auth_services.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart';
 import 'package:orca/features/auth/domain/auth_repo.dart';
 import 'package:orca/features/home/presentation/bottomnav.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 class PasswordScreen extends StatefulWidget {
@@ -37,6 +39,10 @@ class _PasswordScreenState extends State<PasswordScreen> {
         password: passController.text.trim(),
       );
       debugPrint("Login Success: $response");
+
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      await auth.login(response["token"], "User");
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => NavBarPage()),

@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:orca/core/themes/text_theme.dart';
 import 'package:orca/core/utils/colors.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart';
 import 'package:orca/features/auth/presentation/splash.dart';
 import 'package:orca/features/ecom/domain/cart_provider.dart';
-import 'package:orca/features/fitness/data/role_provider.dart';
+import 'package:orca/features/fitness/domain/role_provider.dart';
 import 'package:orca/features/home/presentation/home_page.dart';
 import 'package:orca/firebase_options.dart';
 import 'package:provider/provider.dart';
@@ -18,9 +19,13 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  final auth = AuthProvider();
+  await auth.loadAuthData();
+
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(create: (_) => RoleProvider()),
-    ChangeNotifierProvider(create: (_) => CartProvider())
+    ChangeNotifierProvider(create: (_) => CartProvider()),
+    ChangeNotifierProvider<AuthProvider>.value(value: auth),
   ], child: const MyApp()));
 }
 

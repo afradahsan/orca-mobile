@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:orca/core/themes/text_theme.dart';
 import 'package:orca/core/utils/constants.dart';
 import 'package:orca/features/ecom/domain/cart_provider.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart' as auth_provider;
 import 'package:orca/features/ecom/presentation/cart_page.dart';
-import 'package:orca/features/fitness/data/role_provider.dart';
+import 'package:orca/features/fitness/domain/role_provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:orca/core/utils/colors.dart';
 import '../data/product_model.dart';
@@ -25,11 +27,47 @@ class ProductDetailsPage extends StatefulWidget {
 
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
   int _quantity = 1;
+  String? selectedSize;
+  String token = '';
+
+  Future<void> loadToken() async {
+    final auth = Provider.of<auth_provider.AuthProvider>(context, listen: false);
+    await auth.loadAuthData();
+    token = auth.token ?? 'idk';
+    debugPrint('statement: Loaded token in product details: $token');
+  }
+
+  final List<String> allSizes = ["S", "M", "L", "XL"];
+
+  int _stockForSize(String size) {
+    final match = widget.product.sizes.where((s) => s.size == size).toList();
+
+    if (match.isEmpty) return 0;
+    return match.first.colors.fold(0, (sum, c) => sum + c.stock);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadToken();
+
+    for (final s in allSizes) {
+      if (_stockForSize(s) > 0) {
+        selectedSize = s;
+        break;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isMember = Provider.of<RoleProvider>(context, listen: false).isMember;
     bool added = false;
+
+    debugPrint(
+      widget.product.sizes.map((s) => s.size).toString(),
+    );
 
     return Scaffold(
       bottomNavigationBar: Padding(
@@ -69,7 +107,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 style: ElevatedButton.styleFrom(backgroundColor: green),
                 onPressed: () {
                   final cart = Provider.of<CartProvider>(context, listen: false);
-                  cart.addToCart(widget.product, _quantity);
+                  final double price = double.parse(widget.product.price);
+                  cart.addToCart(token: token, productId: widget.product.id, size: selectedSize!, quantity: _quantity, price: price);
 
                   // Bounce animation
                   setState(() {
@@ -83,7 +122,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   // Optional: feedback
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text("${widget.product.name} added to cart", style: KTextTheme.dottedDark.bodyMedium,),
+                      content: Text(
+                        "${widget.product.name} added to cart",
+                        style: KTextTheme.dottedDark.bodyMedium,
+                      ),
                       duration: const Duration(milliseconds: 800),
                     ),
                   );
@@ -103,10 +145,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 alignment: Alignment.topRight,
                 children: [
                   IconButton(
-                    icon: Image.asset('assets/icons/cart-dotted.png', height: 20.sp,),
-                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CartPage()))
-                  ),
-                  if (cart.totalItems > 0)
+                      icon: Image.asset(
+                        'assets/icons/cart-dotted.png',
+                        height: 20.sp,
+                      ),
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CartPage()))),
+                  if (cart.items.length > 0)
                     Positioned(
                       right: 12.sp,
                       top: 10.sp,
@@ -117,7 +161,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           shape: BoxShape.circle,
                         ),
                         child: Text(
-                          '${cart.totalItems}',
+                          '${cart.items.length}',
                           style: KTextTheme.dottedDark.bodySmall!.copyWith(color: Colors.black, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -160,10 +204,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 sizedfive(context),
                 Row(
                   children: [
-                    Text(
-                      '₹${widget.product.price}',
-                      style: TextStyle(fontSize: 16.sp, color: green)
-                    ),
+                    Text('₹${widget.product.price}', style: TextStyle(fontSize: 16.sp, color: green)),
                     SizedBox(width: 13.sp),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -171,7 +212,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         color: green,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text('Member Price - ₹${(double.parse(widget.product.price)-250).toInt()}', style: TextStyle(fontSize: 14.sp, color: Colors.black)),
+                      child: Text('Member Price - ₹${(double.parse(widget.product.price) - 250).toInt()}', style: TextStyle(fontSize: 14.sp, color: Colors.black)),
                     ),
                   ],
                 ),
@@ -184,13 +225,63 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     ),
                   ),
                 SizedBox(height: 14.sp),
+                Text(
+                  "Select Size",
+                  style: KTextTheme.dottedDark.titleSmall,
+                ),
+                SizedBox(height: 10.sp),
+                Wrap(
+                  spacing: 12.sp,
+                  children: allSizes.map((size) {
+                    final int stock = _stockForSize(size);
+                    final bool isAvailable = stock > 0;
+                    final bool isSelected = selectedSize == size;
+
+                    return GestureDetector(
+                      onTap: isAvailable
+                          ? () {
+                              setState(() {
+                                selectedSize = size;
+                              });
+                            }
+                          : null,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 25.sp,
+                        height: 25.sp,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isAvailable ? Colors.transparent : Colors.white10,
+                          border: Border.all(
+                            color: isSelected
+                                ? green
+                                : isAvailable
+                                    ? Colors.white38
+                                    : Colors.white12,
+                            width: 2,
+                          ),
+                        ),
+                        child: Text(
+                          size,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? green
+                                : isAvailable
+                                    ? Colors.white
+                                    : Colors.white38,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
                 Divider(color: Colors.white24),
                 Text('ABOUT THE PRODUCT', style: KTextTheme.dottedDark.titleMedium),
                 SizedBox(height: 6.sp),
-                Text(
-                  "A high quality product that meets your needs and exceeds expectations. Crafted with precision and care, this product is designed to provide exceptional performance and durability.",
-                  style: TextStyle(fontSize: 14.sp, color: white)
-                ),
+                Text(widget.product.description.isNotEmpty ? widget.product.description : 'No description available for this product.', style: TextStyle(fontSize: 14.sp, color: white)),
                 SizedBox(height: 20.sp),
                 SizedBox(height: 25.sp),
               ],

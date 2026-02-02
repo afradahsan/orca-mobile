@@ -1,3 +1,4 @@
+import 'dart:convert';
 enum UserRole { owner, member, admin }
 
 class UserModel {
@@ -17,9 +18,9 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
+      id: json['_id'] ?? json['id'] ?? "",
+      name: json['name'] ?? "Unnamed User",
+      email: json['email'] ?? "No Email",
       role: UserRole.values.firstWhere(
         (r) => r.toString() == 'UserRole.${json['role']}',
         orElse: () => UserRole.member,
@@ -35,4 +36,14 @@ class UserModel {
         'role': role.toString().split('.').last,
         'active': active,
       };
+}
+
+extension UserModelHelpers on UserModel {
+  String toJsonString() => jsonEncode(toJson());
+}
+
+extension UserModelFromJsonString on UserModel {
+  static UserModel fromJsonString(String jsonString) {
+    return UserModel.fromJson(jsonDecode(jsonString));
+  }
 }

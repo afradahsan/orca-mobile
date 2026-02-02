@@ -5,8 +5,10 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/features/auth/data/auth_services.dart';
 import 'package:orca/features/auth/domain/auth_repo.dart';
+import 'package:orca/features/auth/presentation/gym_owner_login.dart';
 import 'package:orca/features/auth/presentation/password-screen.dart';
 import 'package:orca/features/auth/presentation/register_gym.dart';
+import 'package:orca/features/auth/presentation/signup_page.dart';
 import 'package:orca/features/home/presentation/bottomnav.dart';
 import 'package:sizer/sizer.dart';
 
@@ -154,32 +156,72 @@ class _PhoneNumberState extends State<PhoneNumber> {
                         SizedBox(height: 15.sp),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: green,
+                            backgroundColor:green, 
                             padding: EdgeInsets.symmetric(vertical: 14.sp),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12.sp),
                             ),
                           ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => PasswordScreen(
-                                  email: emailController.text.trim(),
-                                  phoneNumber: phoneController.text.trim(),
-                                ),
-                              ),
-                            );
-                          },
+                          onPressed: _isLoading
+                              ? (){}
+                              : () async {
+                                  final phone = phoneController.text.trim();
+                                  if (phone.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text("Please enter a valid phone number")),
+                                    );
+                                    return;
+                                  }
+
+                                  setState(() => _isLoading = true);
+
+                                  try {
+                                    final exists = await _authRepo.checkUserExistence(phone);
+
+                                    if (exists) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => PasswordScreen(
+                                            phoneNumber: phone,
+                                            email: emailController.text,
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => ProgressiveSignupPage(phoneNumber: phone),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Error: $e")),
+                                    );
+                                  } finally {
+                                    setState(() => _isLoading = false);
+                                  }
+                                },
                           child: Center(
-                            child: Text(
-                              'Continue',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? SizedBox(
+                                    height: 18.sp,
+                                    width: 18.sp,
+                                    child: const CircularProgressIndicator(
+                                      color: Colors.black,
+                                      strokeWidth: 2.2,
+                                    ),
+                                  )
+                                : Text(
+                                    'Continue',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
                         ),
                         SizedBox(height: 12.sp),
@@ -234,12 +276,10 @@ class _PhoneNumberState extends State<PhoneNumber> {
                 ),
               ),
             ),
-
             Padding(
               padding: EdgeInsets.only(bottom: 20.sp),
               child: GestureDetector(
-                onTap: () {
-                },
+                onTap: () {},
                 child: RichText(
                   textAlign: TextAlign.center,
                   text: TextSpan(
@@ -264,7 +304,7 @@ class _PhoneNumberState extends State<PhoneNumber> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const RegisterGymOwnerPage(),
+                                builder: (_) => const GymOwnerLoginPage(),
                               ),
                             );
                           },

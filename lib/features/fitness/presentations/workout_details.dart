@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/core/utils/constants.dart';
+import 'package:orca/features/fitness/data/member_challenge_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 
 class WorkoutDetailsPage extends StatefulWidget {
@@ -57,7 +59,6 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
     }
   }
 
-
   void _togglePlayPause() {
     if (_isCompleted) {
       _restartExercise();
@@ -106,6 +107,38 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
     }
   }
 
+  Future<void> _logWorkoutToChallenge() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("member_token");
+    final challengeId = prefs.getString("active_challenge_id");
+
+    if (token == null || challengeId == null) return;
+
+    try {
+      final updated = await MemberChallengeService().logWorkout(challengeId, token);
+
+      // optional aura popup
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: Colors.black,
+            content: Text(
+              "+${updated.auraEarnedToday} Aura✨",
+              style: TextStyle(color: Colors.greenAccent, fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        );
+
+        await Future.delayed(const Duration(seconds: 1));
+        Navigator.pop(context);
+      }
+    } catch (_) {
+      // silently fail if already logged today
+    }
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -126,7 +159,11 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: Icon(Icons.close, color: Colors.white, size: 18.sp,),
+            icon: Icon(
+              Icons.close,
+              color: Colors.white,
+              size: 18.sp,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
         ],
@@ -138,11 +175,16 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                currentExercise['imageUrl'],
+              child: Image.network(
+                currentExercise['imageUrl'] ?? '',
                 width: double.infinity,
                 height: 75.sp,
                 fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  "assets/images/gym.png",
+                  height: 70.sp,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             SizedBox(height: 6.sp),
@@ -151,11 +193,17 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _infoBlock(context, Icons.fitness_center_rounded, 'Equipments', currentExercise['equipment']),
+                  _infoBlock(context, Icons.bar_chart, 'Difficulty', currentExercise['difficulty']),
                   sizedten(context),
-                  _infoBlock(context, Icons.fitness_center_rounded, 'Muscle', currentExercise['muscle']),
+                  _infoBlock(context, Icons.category, 'Category', currentExercise['category']),
                   sizedten(context),
-                  _infoBlock(context, Icons.local_fire_department_rounded, 'Level', currentExercise['level']),
+                  _infoBlock(context, Icons.fitness_center, 'Equipment', currentExercise['equipment']),
+                  sizedten(context),
+                  _infoBlock(context, Icons.accessibility_new, 'Target Muscles', currentExercise['targetMuscles']),
+                  sizedten(context),
+                  _infoBlock(context, Icons.repeat, 'Sets / Reps', "${currentExercise['sets']} x ${currentExercise['reps']}"),
+                  sizedten(context),
+                  _infoBlock(context, Icons.timer, 'Rest Time', "${currentExercise['restTime']} sec"),
                 ],
               ),
             ),
@@ -187,8 +235,7 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
                     backgroundColor: Color(0xFFB9F708),
                     iconColor: darkgreen,
                   ),
-                  if (!isLastExercise)
-                    SizedBox(width: 6.w),
+                  if (!isLastExercise) SizedBox(width: 6.w),
                   if (!isLastExercise)
                     _actionButton(
                       icon: Icons.arrow_forward_rounded,
@@ -197,8 +244,7 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
                       iconColor: Colors.white,
                       borderColor: Color(0xFFB9F708),
                     ),
-                  if (isLastExercise)
-                    SizedBox(width: 8.w),
+                  if (isLastExercise) SizedBox(width: 8.w),
                   if (isLastExercise)
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -206,7 +252,10 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         padding: EdgeInsets.symmetric(horizontal: 28, vertical: 12),
                       ),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () async {
+                        await _logWorkoutToChallenge();
+                        Navigator.pop(context);
+                      },
                       child: Text(
                         'Finish',
                         style: TextStyle(
@@ -225,8 +274,7 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
                     backgroundColor: Color(0xFFB9F708),
                     iconColor: darkgreen,
                   ),
-                  if (_isPlaying)
-                    SizedBox(width: 16),
+                  if (_isPlaying) SizedBox(width: 16),
                   if (_isPlaying)
                     _actionButton(
                       icon: Icons.stop,
@@ -266,7 +314,14 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
     );
   }
 
-  Widget _infoBlock(BuildContext context, IconData icon, String title, String value) {
+  Widget _infoBlock(
+    BuildContext context,
+    IconData icon,
+    String title,
+    dynamic value,
+  ) {
+    final String displayValue = value is List ? value.join(', ') : value?.toString() ?? '';
+
     return Container(
       height: 32.sp,
       width: double.infinity,
@@ -283,21 +338,25 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: green,
-                    fontFamily: GoogleFonts.poppins().fontFamily,
-                    decoration: TextDecoration.none,
-                  )),
-              Text(value,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: green,
-                    fontFamily: GoogleFonts.bebasNeue().fontFamily,
-                    decoration: TextDecoration.none,
-                  )),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: green,
+                  fontFamily: GoogleFonts.poppins().fontFamily,
+                  decoration: TextDecoration.none,
+                ),
+              ),
+              Text(
+                displayValue,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  color: green,
+                  fontFamily: GoogleFonts.bebasNeue().fontFamily,
+                  decoration: TextDecoration.none,
+                ),
+              ),
             ],
           ),
         ],

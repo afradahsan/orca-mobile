@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/features/ecom/data/product_model.dart';
-import 'package:orca/features/fitness/data/role_provider.dart';
+import 'package:orca/features/fitness/domain/role_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 

@@ -2,49 +2,55 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/core/utils/constants.dart';
-import 'package:orca/features/fitness/data/challenge_model.dart';
-import 'package:orca/features/fitness/data/challenge_task_model.dart';
-import 'package:orca/features/fitness/data/exercise_model.dart';
-import 'package:orca/features/fitness/data/guide_model.dart';
-import 'package:orca/features/fitness/presentations/account_fitness.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart';
+import 'package:orca/features/fitness/data/challenge_services.dart';
+import 'package:orca/features/fitness/data/exercise_service.dart';
+import 'package:orca/features/fitness/domain/challenge_model.dart';
+import 'package:orca/features/fitness/domain/exercise_model.dart';
+import 'package:orca/features/fitness/domain/guide_model.dart';
 import 'package:orca/features/fitness/presentations/all_workouts.dart';
 import 'package:orca/features/fitness/presentations/fitness_guide.dart';
 import 'package:orca/features/fitness/presentations/weekly_challenge.dart';
+import 'package:orca/features/fitness/presentations/wokout_history.dart';
+import 'package:orca/features/fitness/presentations/workout_details.dart';
 import 'package:orca/features/fitness/presentations/workout_page.dart';
 import 'package:orca/features/home/presentation/profile_page.dart';
+import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:sizer/sizer.dart';
 
 class FitnessPage extends StatefulWidget {
-  const FitnessPage({super.key});
+  const FitnessPage({super.key, this.token});
+
+  final String? token;
 
   @override
   State<FitnessPage> createState() => _FitnessPageState();
 }
 
-class _FitnessPageState extends State<FitnessPage> {
+class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClientMixin {
   int selectedIndex = 1;
-  double progress = 0.2;
 
-  final List<Exercise> exercises = [
-    Exercise(
-      id: "1",
-      title: "Squat Exercise",
-      category: "Legs",
-      duration: "12 Min",
-      difficulty: "Beginner",
-      steps: ["Stand straight", "Bend knees", "Repeat"],
-      calories: 45,
-    ),
-    Exercise(
-      id: "2",
-      title: "Full Body Stretching",
-      category: "Stretch",
-      duration: "12 Min",
-      difficulty: "Beginner",
-      steps: ["Stretch arms", "Hold pose", "Repeat"],
-      calories: 45,
-    ),
-  ];
+  String _challengeStageText(Challenge c) {
+    final int p = c.progress;
+
+    if (p == 0) return "Stage: Onboarding";
+    if (p == 1) return "Stage: Momentum";
+    if (p == 2) return "Stage: Consistent";
+    if (p == 3) return "Stage: Strong";
+    if (p >= c.target) return "Stage: Complete";
+
+    return "Stage: Progressing";
+  }
+
+  List<Exercise> exercises = [];
+  bool _isLoading = true;
+  final ExerciseService _exerciseService = ExerciseService();
+
+  List<Challenge> challenges = [];
+  bool loadingChallenges = true;
+  bool _dataLoaded = false;
+  final ChallengeService _challengeService = ChallengeService();
 
   final Guide guide = Guide(
     id: "g1",
@@ -57,21 +63,102 @@ class _FitnessPageState extends State<FitnessPage> {
   late Challenge weeklyChallenge;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
-    weeklyChallenge = Challenge(
-      id: "c1",
-      title: "Weekly Fat Burn",
-      description: "Complete 10 sessions this week",
-      target: 10,
-      tasks: [
-        ChallengeTask(id: "t1", day: "Monday", taskName: "Do 30 pushups"),
-        ChallengeTask(id: "t2", day: "Tuesday", taskName: "15 min Run"),
-      ],
-      startDate: DateTime(2025, 09, 11),
-      endDate: DateTime(2025, 09, 11),
+
+    if (!_dataLoaded) {
+      fetchAllExercises();
+      fetchChallenges();
+      _dataLoaded = true;
+    }
+
+    // weeklyChallenge = Challenge(
+    //   id: "c1",
+    //   title: "Weekly Fat Burn",
+    //   description: "Burn fat and stay active for the week",
+    //   difficulty: "Beginner",
+    //   durationDays: 7,
+    //   startDate: DateTime(2025, 09, 11),
+    //   endDate: DateTime(2025, 09, 18),
+    //   exerciseIds: ["1", "2"],
+    //   isActive: true,
+    //   progress: 3,
+    //   target: 5,
+    // );
+  }
+
+  Future<void> fetchChallenges() async {
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      await auth.loadAuthData();
+
+      final fetched = await _challengeService.getChallenges(auth.token!);
+
+      setState(() {
+        challenges = fetched;
+        loadingChallenges = false;
+      });
+
+      debugPrint("Fetched ${challenges.length} challenges");
+    } catch (e) {
+      debugPrint("Challenge Load Error: $e");
+      setState(() => loadingChallenges = false);
+    }
+  }
+
+  Widget workoutShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade900,
+      highlightColor: Colors.grey.shade600,
+      child: Container(
+        width: 51.sp,
+        height: 52.sp,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: Colors.grey,
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
     );
-    progress = weeklyChallenge.target > 0 ? weeklyChallenge.progress / weeklyChallenge.target : 0;
+  }
+
+  Widget challengeShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade900,
+      highlightColor: Colors.grey.shade600,
+      child: Container(
+        width: 160.sp,
+        height: 52.sp,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: Colors.grey,
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+    );
+  }
+
+  Future<void> fetchAllExercises() async {
+    try {
+      debugPrint("Fetching exercises...");
+
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      await auth.loadAuthData();
+
+      final exercisesList = await _exerciseService.fetchExercises(auth.token!);
+      debugPrint('${exercisesList.length} exercises fetched.');
+      setState(() {
+        debugPrint('ex: $exercisesList');
+        exercises = exercisesList;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("exercise Load Error: $e");
+      setState(() => _isLoading = false);
+    }
   }
 
   void onIconTap(int index) {
@@ -82,6 +169,10 @@ class _FitnessPageState extends State<FitnessPage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+    final Challenge? weeklyChallenge = challenges.isNotEmpty ? challenges.first : null;
+    final double challengeProgress = weeklyChallenge == null ? 0 : (weeklyChallenge.progress / weeklyChallenge.target).clamp(0.0, 1.0);
+
     return Scaffold(
       body: SingleChildScrollView(
         child: SafeArea(
@@ -102,25 +193,11 @@ class _FitnessPageState extends State<FitnessPage> {
                         sizedten(context),
                       ],
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => const ProfilePage(),
-                        ));
-                      },
-                      child: CircleAvatar(
-                        radius: 18.sp,
-                        backgroundColor: Colors.transparent,
-                        backgroundImage: const AssetImage('assets/images/gym.png'),
-                      ),
-                    )
+                    IconButton(onPressed: (){}, icon: Icon(Icons.search_rounded, color: white, size: 20.sp))
                   ],
                 ),
-
                 dailyTracker(),
                 sizedten(context),
-
-                // Explore
                 Row(
                   children: [
                     Text('Explore', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
@@ -141,108 +218,118 @@ class _FitnessPageState extends State<FitnessPage> {
                   ],
                 ),
                 sizedtwenty(context),
-
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: exercises.map((ex) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: _buildWorkoutCard(
-                          "assets/images/gym.png",
-                          ex.title,
-                          ex.duration,
-                          "120 Kcal",
+                _isLoading
+                    ? SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: List.generate(3, (_) => workoutShimmer())))
+                    : SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: exercises.map((ex) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: _buildWorkoutCard(ex),
+                            );
+                          }).toList(),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-
+                      ),
                 sizedtwenty(context),
-
                 Text('Weekly Challenge', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
-                SizedBox(height: 12.sp),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => WeeklyChallenge(),
-                    ));
-                  },
-                  child: Stack(
-                    children: [
-                      Container(
-                        height: 57.sp,
-                        width: double.maxFinite,
-                        decoration: BoxDecoration(
-                          image: const DecorationImage(
-                            image: AssetImage("assets/images/challenge.png"),
-                            fit: BoxFit.cover,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      Container(
-                        height: 57.sp,
-                        width: double.maxFinite,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [
-                              Colors.black.withOpacity(0.8),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                        child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.only(bottom: 16.sp, left: 14.sp),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('${weeklyChallenge.progress}/${weeklyChallenge.target} Complete - ${(progress * 100).toInt()}%',
-                                        style: const TextStyle(color: Colors.white, letterSpacing: 1)),
-                                    SizedBox(height: 10.sp),
-                                    SizedBox(
-                                      width: 66.sp,
-                                      child: LinearProgressIndicator(
-                                        borderRadius: BorderRadius.circular(16),
-                                        value: progress,
-                                        backgroundColor: green.withOpacity(0.4),
-                                        valueColor: AlwaysStoppedAnimation<Color>(green),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const Spacer(),
-                              Padding(
-                                padding: EdgeInsets.only(bottom: 12.sp, right: 14.sp),
-                                child: const Icon(Icons.arrow_forward, color: Colors.white),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                Text(
+                  "Aura building through consistency",
+                  style: TextStyle(
+                    color: Colors.greenAccent.withOpacity(0.8),
+                    fontSize: 12.sp,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
-
+                SizedBox(height: 12.sp),
+                loadingChallenges
+                    ? Center(child: challengeShimmer())
+                    : (weeklyChallenge == null)
+                        ? Text("No challenges available", style: TextStyle(color: Colors.white54))
+                        : GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => WeeklyChallenge(challenge: challenges[0],),
+                              ));
+                            },
+                            child: Stack(
+                              children: [
+                                Container(
+                                  height: 57.sp,
+                                  width: double.maxFinite,
+                                  decoration: BoxDecoration(
+                                    image: const DecorationImage(
+                                      image: AssetImage("assets/images/challenge.png"),
+                                      fit: BoxFit.cover,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                Container(
+                                  height: 57.sp,
+                                  width: double.maxFinite,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        Colors.black.withOpacity(0.8),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                  child: Align(
+                                    alignment: Alignment.bottomCenter,
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsets.only(bottom: 16.sp, left: 14.sp),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                _challengeStageText(weeklyChallenge),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  letterSpacing: 1,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              SizedBox(height: 10.sp),
+                                              SizedBox(
+                                                width: 66.sp,
+                                                child: LinearProgressIndicator(
+                                                  borderRadius: BorderRadius.circular(16),
+                                                  value: challengeProgress,
+                                                  backgroundColor: green.withOpacity(0.4),
+                                                  valueColor: AlwaysStoppedAnimation<Color>(green),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Padding(
+                                          padding: EdgeInsets.only(bottom: 12.sp, right: 14.sp),
+                                          child: const Icon(Icons.arrow_forward, color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                 sizedtwenty(context),
-
                 Text('Fitness Guide', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
                 SizedBox(height: 12.sp),
                 GestureDetector(
                   onTap: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => FitnessGuidePage(),
+                      builder: (context) => WorkoutHistoryPage(),
                     ));
                   },
                   child: Container(
@@ -367,19 +454,29 @@ class _FitnessPageState extends State<FitnessPage> {
     );
   }
 
-  Widget _buildWorkoutCard(
-    String imagePath,
-    String title,
-    String duration,
-    String calories,
-  ) {
+  Widget _buildWorkoutCard(Exercise ex) {
+    final imagePath = ex.imageUrl ?? "assets/images/gym.png";
+
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) {
-            return WorkoutPage();
-          },
-        ));
+        // Build the map in the format WorkoutDetailsPage expects
+        final exerciseMap = {
+          'title': ex.name,
+          'imageUrl': imagePath,
+          // adapt these keys/fields to your Exercise model
+          'equipment': ex.equipment ?? 'Bodyweight',
+          // 'muscle': ex.muscleGroup ?? 'Full Body',
+          // 'level': ex.level ?? 'Beginner',
+        };
+
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => WorkoutDetailsPage(
+              // for now we pass a single-exercise list
+              exercises: [exerciseMap],
+            ),
+          ),
+        );
       },
       child: Container(
         width: 53.sp,
@@ -413,26 +510,14 @@ class _FitnessPageState extends State<FitnessPage> {
                     color: green,
                   ),
                 ),
-                // Positioned(
-                //   bottom: -12.sp,
-                //   right: 10.sp,
-                //   child: Container(
-                //     padding: const EdgeInsets.all(6),
-                //     decoration: BoxDecoration(
-                //       color: Colors.purple,
-                //       shape: BoxShape.circle,
-                //     ),
-                //     child: Icon(Icons.play_arrow, color: Colors.white),
-                //   ),
-                // ),
               ],
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
-                title,
+                ex.name,
                 style: TextStyle(
-                  color: Color(0xFFD6FF00),
+                  color: const Color(0xFFD6FF00),
                   fontWeight: FontWeight.bold,
                   fontFamily: GoogleFonts.bebasNeue().fontFamily,
                   letterSpacing: 1,
@@ -444,17 +529,17 @@ class _FitnessPageState extends State<FitnessPage> {
               padding: const EdgeInsets.only(left: 8, bottom: 8),
               child: Row(
                 children: [
-                  Icon(Icons.access_time, color: Colors.purple, size: 16),
+                  const Icon(Icons.access_time, color: Colors.purple, size: 16),
                   const SizedBox(width: 4),
                   Text(
-                    duration,
+                    "${ex.duration} Min",
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
                   const SizedBox(width: 12),
                   Icon(Icons.local_fire_department, color: Colors.purple, size: 16.sp),
                   const SizedBox(width: 4),
                   Text(
-                    calories,
+                    "${ex.caloriesBurned} Kcal",
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ],

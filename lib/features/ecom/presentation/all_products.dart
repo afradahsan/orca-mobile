@@ -7,7 +7,9 @@ import 'package:sizer/sizer.dart';
 import '../data/product_model.dart';
 
 class AllProductsPage extends StatefulWidget {
-  const AllProductsPage({super.key});
+  const AllProductsPage({required this.orcaExclusive, super.key});
+
+  final bool orcaExclusive;
 
   @override
   State<AllProductsPage> createState() => _AllProductsPageState();
@@ -41,7 +43,7 @@ class _AllProductsPageState extends State<AllProductsPage> {
         future: _futureProducts,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: green));
           }
 
           final products = snapshot.data!;

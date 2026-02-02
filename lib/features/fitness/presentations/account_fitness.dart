@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/core/utils/constants.dart';
 import 'package:orca/features/auth/presentation/age_select.dart';
-import 'package:orca/features/fitness/data/role_provider.dart';
+import 'package:orca/features/fitness/domain/role_provider.dart';
 import 'package:orca/features/fitness/presentations/all_workouts.dart';
 import 'package:orca/features/fitness/presentations/fitness_page.dart';
 import 'package:orca/features/fitness/presentations/gym_ownerpage.dart';

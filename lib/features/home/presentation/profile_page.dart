@@ -1,23 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:orca/core/utils/colors.dart';
 import 'package:orca/features/auth/data/auth_services.dart';
 import 'package:orca/features/auth/domain/auth_repo.dart';
 import 'package:orca/features/auth/presentation/get_started.dart';
 import 'package:orca/features/auth/presentation/signup_page.dart';
+import 'package:orca/features/ecom/data/order_model.dart';
+import 'package:orca/features/ecom/domain/order_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  const ProfilePage({required this.token, super.key});
+
+  final String? token;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final List<Map<String, dynamic>> orders = [
-    {"image": "assets/images/gym.png", "title": "Whey Protein (1kg)", "price": "₹1499", "status": "Delivered"},
-    {"image": "assets/images/gym.png", "title": "Resistance Bands Set", "price": "₹799", "status": "In Transit"},
-    {"image": "assets/images/gym.png", "title": "Fitness Gloves", "price": "₹499", "status": "Cancelled"},
-  ];
+  late Future<List<Order>> _futureOrders;
+  final OrderService _orderService = OrderService();
+
+  @override
+  void initState() {
+    debugPrint('load orders');
+    super.initState();
+    _futureOrders = _loadOrders();
+  }
+
+  Future<List<Order>> _loadOrders() async {
+    debugPrint("Loading orders...");
+    final prefs = await SharedPreferences.getInstance();
+    debugPrint('prefs obtained');
+    debugPrint('token is ${widget.token}');
+    return await _orderService.fetchOrders(widget.token!);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,8 +77,33 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const Spacer(),
                   IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.edit, color: Colors.white),
+                    onPressed: () async {
+                      final confirm = await showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Sign Out'),
+                          content: const Text('Are you sure you want to log out?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Logout')),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        final authRepo = AuthRepo(authServices: AuthServices());
+                        await authRepo.signOut();
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return GetStarted();
+                            },
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.logout_rounded, color: Colors.white),
                   ),
                 ],
               ),
@@ -150,91 +193,95 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               SizedBox(height: 12.sp),
 
-              Column(
-                children: orders.map((order) {
-                  return Container(
-                    margin: EdgeInsets.only(bottom: 12.sp),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A1A),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.grey.shade800),
-                    ),
-                    child: ListTile(
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.asset(order['image'], width: 42, height: 42, fit: BoxFit.cover),
-                      ),
-                      title: Text(
-                        order['title'],
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.sp,
+              FutureBuilder<List<Order>>(
+                future: _futureOrders,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator(color: green));
+                  }
+
+                  if (snapshot.hasError) {
+                    return Text("Failed to load orders", style: TextStyle(color: Colors.redAccent));
+                  }
+
+                  final orders = snapshot.data!;
+
+                  if (orders.isEmpty) {
+                    return Text("No orders yet", style: TextStyle(color: Colors.white54));
+                  }
+
+                  return Column(
+                    children: orders.map((order) {
+                      final firstItem = order.items.first;
+
+                      return Container(
+                        margin: EdgeInsets.only(bottom: 12.sp),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A1A1A),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.grey.shade800),
                         ),
-                      ),
-                      subtitle: Text(
-                        order['price'],
-                        style: TextStyle(color: Colors.grey[400], fontSize: 11.sp),
-                      ),
-                      trailing: Text(
-                        order['status'],
-                        style: TextStyle(
-                          color: order['status'] == "Delivered"
-                              ? Colors.greenAccent
-                              : order['status'] == "In Transit"
-                                  ? Colors.orangeAccent
-                                  : Colors.redAccent,
-                          fontWeight: FontWeight.bold,
+                        child: ListTile(
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              firstItem.image,
+                              width: 42,
+                              height: 42,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          title: Text(
+                            firstItem.productName,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12.sp,
+                            ),
+                          ),
+                          subtitle: Text(
+                            "₹${order.total.toStringAsFixed(0)} • ${_formatDate(order.createdAt)}",
+                            style: TextStyle(color: Colors.grey[400], fontSize: 11.sp),
+                          ),
+                          trailing: Text(
+                            order.status.toUpperCase(),
+                            style: TextStyle(
+                              color: _statusColor(order.status),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    }).toList(),
                   );
-                }).toList(),
+                },
               ),
 
               SizedBox(height: 20.sp),
 
-              // ---------- Logout ----------
-              Center(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 30.sp, vertical: 10.sp),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () async {
-                    final confirm = await showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Sign Out'),
-                        content: const Text('Are you sure you want to log out?'),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Logout')),
-                        ],
-                      ),
-                    );
-
-                    if (confirm == true) {
-                      final authRepo = AuthRepo(authServices: AuthServices());
-                      await authRepo.signOut();
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) {
-                          return GetStarted();
-                        },),
-                        (route) => false,
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.logout, color: Colors.white),
-                  label: const Text("Logout", style: TextStyle(color: Colors.white)),
-                ),
-              ),
+              SizedBox(height: 20.sp),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case "delivered":
+        return Colors.greenAccent;
+      case "in transit":
+        return Colors.orangeAccent;
+      case "cancelled":
+        return Colors.redAccent;
+      default:
+        return Colors.white70;
+    }
+  }
+
+  String _formatDate(DateTime d) {
+    return "${d.day}/${d.month}/${d.year}";
   }
 
   Widget _buildActionCard(IconData icon, String title, Color color, VoidCallback onTap) {

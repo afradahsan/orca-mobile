@@ -1,51 +1,78 @@
 import 'package:flutter/material.dart';
+import 'package:orca/features/ecom/data/cart_model.dart';
 import 'package:orca/features/ecom/data/product_model.dart';
-
-class CartItem {
-  final Product product;
-  int quantity;
-
-  CartItem(this.product, this.quantity);
-}
+import 'package:orca/features/ecom/domain/cart_services.dart';
 
 class CartProvider with ChangeNotifier {
-  final List<CartItem> _items = [];
+  List<CartItem> _items = [];
+  double _totalPrice = 0;
+  bool _loading = false;
 
   List<CartItem> get items => _items;
+  double get totalPrice => _totalPrice;
+  bool get isLoading => _loading;
 
-  void addToCart(Product product, int qty) {
-    final index = _items.indexWhere((e) => e.product.id == product.id);
-    if (index != -1) {
-      _items[index].quantity += qty;
-    } else {
-      _items.add(CartItem(product, qty));
-    }
+  Future<void> fetchCart(String token) async {
+    _loading = true;
+    notifyListeners();
+
+    final res = await CartService().getCart(token);
+
+    _items = res.items;
+    _totalPrice = res.totalPrice;
+
+    _loading = false;
     notifyListeners();
   }
 
-  void increaseQuantity(int index) {
-    _items[index].quantity++;
-    notifyListeners();
+  Future<void> addToCart({
+    required String token,
+    required String productId,
+    required String size,
+    required int quantity,
+    required double price,
+  }) async {
+    await CartService().addToCart(token: token, productId: productId, size: size, quantity: quantity, price: price, color: 'default');
+
+    await fetchCart(token);
   }
 
-  void decreaseQuantity(int index) {
-    if (_items[index].quantity > 1) {
-      _items[index].quantity--;
-    } else {
-      _items.removeAt(index);
-    }
-    notifyListeners();
+  Future<void> increaseQuantity({
+    required String token,
+    required String productId,
+    required int quantity,
+  }) async {
+    await CartService().updateCart(
+      token: token,
+      productId: productId,
+      quantity: quantity
+    );
+
+    await fetchCart(token);
   }
 
-  void removeItem(int index) {
-    _items.removeAt(index);
-    notifyListeners();
+  Future<void> decreaseQuantity(int index, {
+    required String token,
+    required String productId,
+    required int quantity,
+  }) async {
+    await CartService().updateCart(
+      token: token,
+      productId: productId,
+      quantity: quantity,
+    );
+
+    await fetchCart(token);
   }
 
-  int get totalItems => _items.fold(0, (sum, e) => sum + e.quantity);
+  Future<void> removeItem(String token, String productId) async {
+    await CartService().removeFromCart(token, productId);
+    await fetchCart(token);
+  }
 
-  double get totalPrice => _items.fold(
-    0,
-    (sum, e) => sum + (double.parse(e.product.price.replaceAll("₹","")) * e.quantity),
-  );
+  void clear() {
+    _items = [];
+    _totalPrice = 0;
+    notifyListeners();
+  }
 }

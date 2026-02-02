@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../data/product_model.dart';
 
 class ProductService {
-  final String baseUrl = 'https://orca-1-nie0.onrender.com/api/user/shop-products';
+  final String baseUrl = 'https://api.orcasportsclub.in/api/user/shop-products';
 
   Future<List<Product>> fetchAllProducts() async {
     final uri = Uri.parse(baseUrl);

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:orca/core/themes/text_theme.dart';
 import 'package:orca/core/utils/colors.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart';
+import 'package:orca/features/ecom/data/address_model.dart';
 import 'package:orca/features/ecom/domain/cart_provider.dart';
+import 'package:orca/features/ecom/presentation/checkout_address.dart';
+import 'package:orca/features/ecom/presentation/order_success.dart';
 import 'package:provider/provider.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:sizer/sizer.dart';
 
 class CartPage extends StatefulWidget {
@@ -13,7 +18,21 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  String token = "";
+  
   @override
+  void initState() {
+    super.initState();
+    loadAddresses();
+  }
+
+  Future<void> loadAddresses() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    await auth.loadAuthData();
+
+    token = auth.token ?? "idk";
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: darkgreen,
@@ -55,7 +74,7 @@ class _CartPageState extends State<CartPage> {
                   contentPadding: EdgeInsets.all(10.sp),
                   leading: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.asset(
+                    child: Image.network(
                       item.product.images[index],
                       width: 50,
                       height: 50,
@@ -67,7 +86,7 @@ class _CartPageState extends State<CartPage> {
                     style: KTextTheme.dottedDark.bodyLarge,
                   ),
                   subtitle: Text(
-                    "Rs ${item.product.price.replaceAll("₹", "")} x ${item.quantity}",
+                    "Rs ${item.price} x ${item.quantity}",
                     style: KTextTheme.dottedDark.bodySmall,
                   ),
                   trailing: Row(
@@ -75,7 +94,7 @@ class _CartPageState extends State<CartPage> {
                     children: [
                       IconButton(
                         icon: Text("-", style: KTextTheme.dottedDark.bodyLarge),
-                        onPressed: () => cart.decreaseQuantity(index),
+                        onPressed:   () => cart.decreaseQuantity(index, token: token, productId: cart.items[index].product.id, quantity: cart.items[index].quantity),
                       ),
                       Text(
                         '${item.quantity}',
@@ -83,11 +102,11 @@ class _CartPageState extends State<CartPage> {
                       ),
                       IconButton(
                         icon: Text("+", style: KTextTheme.dottedDark.bodyLarge),
-                        onPressed: () => cart.increaseQuantity(index),
+                        onPressed: () => cart.increaseQuantity(token: token, productId: cart.items[index].product.id, quantity: cart.items[index].quantity),
                       ),
                       IconButton(
                         icon: Image.asset('assets/icons/bin-dotted.png', height: 24.sp, color: Colors.red),
-                        onPressed: () => cart.removeItem(index),
+                        onPressed: () => cart.removeItem('', ''),
                       ),
                     ],
                   ),
@@ -128,7 +147,10 @@ class _CartPageState extends State<CartPage> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
-                    // TODO: Implement checkout flow
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => CheckoutAddressPage(totalAmount: cart.totalPrice,)),
+                    );
                   },
                   child: Text(
                     "CHECKOUT",
