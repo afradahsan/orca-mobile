@@ -15,7 +15,7 @@ class ExerciseService {
   Future<List<Exercise>> fetchExercises(String token) async {
     debugPrint('token in exercise service: $token');
     final response = await http.get(
-      Uri.parse("$baseUrl/members"),
+      Uri.parse("$baseUrl/member"),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

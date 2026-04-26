@@ -6,8 +6,8 @@ import 'package:orca/features/fitness/domain/member_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class GymOwnerService {
-  final String baseUrl = 'https://orcasportsclub.in/api/gym-owner';
-  final String fitnessUrl = 'https://orcasportsclub.in/api/fitness/exercises';
+  final String baseUrl = 'https://api.orcasportsclub.in/api/gym-owner';
+  final String fitnessUrl = 'https://api.orcasportsclub.in/api/fitness/exercises';
 
   Future<Map<String, dynamic>> registerGymOwner({
     required String name,

@@ -7,7 +7,6 @@ import 'package:orca/features/auth/data/auth_services.dart';
 import 'package:orca/features/auth/domain/auth_repo.dart';
 import 'package:orca/features/auth/presentation/gym_owner_login.dart';
 import 'package:orca/features/auth/presentation/password-screen.dart';
-import 'package:orca/features/auth/presentation/register_gym.dart';
 import 'package:orca/features/auth/presentation/signup_page.dart';
 import 'package:orca/features/home/presentation/bottomnav.dart';
 import 'package:sizer/sizer.dart';
@@ -166,6 +165,7 @@ class _PhoneNumberState extends State<PhoneNumber> {
                               ? (){}
                               : () async {
                                   final phone = phoneController.text.trim();
+                                  /// change style of snackbar
                                   if (phone.isEmpty) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(content: Text("Please enter a valid phone number")),

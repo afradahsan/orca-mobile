@@ -99,7 +99,7 @@ class _AllProductsPageState extends State<AllProductsPage> {
                           children: [
                             Text(p.name,
                                 style: KTextTheme.dottedDark.bodyLarge),
-                            Text(p.price,
+                            Text(p.price.toString(),
                                 style: KTextTheme.dottedDark.bodySmall),
                           ],
                         ),

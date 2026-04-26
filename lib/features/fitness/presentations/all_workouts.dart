@@ -5,12 +5,16 @@ import 'package:orca/core/utils/constants.dart';
 import 'package:orca/features/auth/domain/auth_provider.dart';
 import 'package:orca/features/fitness/data/exercise_service.dart';
 import 'package:orca/features/fitness/domain/exercise_model.dart';
+import 'package:orca/features/fitness/presentations/workout_details.dart';
 import 'package:orca/features/fitness/presentations/workout_page.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 class AllWorkouts extends StatefulWidget {
-  const AllWorkouts({super.key});
+  const AllWorkouts({super.key, this.filter, this.exercises});
+
+  final String? filter;
+  final List<Map<String, dynamic>>? exercises;
 
   @override
   State<AllWorkouts> createState() => _AllWorkoutsState();
@@ -31,11 +35,30 @@ class _AllWorkoutsState extends State<AllWorkouts> {
   @override
   void initState() {
     super.initState();
-    _fetchExercises();
+    if (widget.exercises == null || widget.exercises!.isEmpty) {
+      _fetchExercises();
+    } else {
+      _isLoading = false;
+    }
+  }
+
+  Map<String, dynamic> exerciseToMap(Exercise ex) {
+    return {
+      "title": ex.name,
+      "imageUrl": ex.imageUrl ?? "",
+      "difficulty": ex.difficulty ?? "Beginner",
+      "category": ex.category ?? "General",
+      "equipment": ex.equipment ?? [],
+      "targetMuscles": ex.targetMuscles ?? [],
+      "sets": ex.sets ?? 0,
+      "reps": ex.reps ?? 0,
+      "restTime": ex.restTime ?? 30,
+    };
   }
 
   Future<void> _fetchExercises() async {
     try {
+      debugPrint('today exercises: ${widget.exercises?.length ?? "null"}');
       final auth = Provider.of<AuthProvider>(context, listen: false);
       await auth.loadAuthData();
 
@@ -71,9 +94,7 @@ class _AllWorkoutsState extends State<AllWorkouts> {
       _filteredExercises = List.from(_exercises);
     } else {
       final lower = _searchQuery.toLowerCase();
-      _filteredExercises = _exercises
-          .where((e) => e.name.toLowerCase().contains(lower))
-          .toList();
+      _filteredExercises = _exercises.where((e) => e.name.toLowerCase().contains(lower)).toList();
     }
   }
 
@@ -85,6 +106,9 @@ class _AllWorkoutsState extends State<AllWorkouts> {
 
   @override
   Widget build(BuildContext context) {
+    final isCustomList = widget.exercises != null && widget.exercises!.isNotEmpty;
+    final bool hasCustomExercises = widget.exercises != null && widget.exercises!.isNotEmpty;
+
     return Scaffold(
       backgroundColor: darkgreen,
       appBar: AppBar(
@@ -94,7 +118,7 @@ class _AllWorkoutsState extends State<AllWorkouts> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'All Workouts',
+          isCustomList ? "${widget.filter ?? "For You"} Workouts" : "All Workouts",
           style: TextStyle(
             color: Colors.white,
             fontSize: 20.sp,
@@ -158,36 +182,31 @@ class _AllWorkoutsState extends State<AllWorkouts> {
                             style: const TextStyle(color: Colors.white70),
                           ),
                         )
-                      : _filteredExercises.isEmpty
-                          ? const Center(
-                              child: Text(
-                                "No workouts found",
-                                style: TextStyle(color: Colors.white70),
-                              ),
-                            )
-                          : ListView.separated(
-                              itemCount: _filteredExercises.length,
+                      : hasCustomExercises
+                          ? ListView.separated(
+                              itemCount: widget.exercises!.length,
                               separatorBuilder: (context, index) {
                                 return sizedfive(context);
                               },
                               itemBuilder: (context, index) {
-                                final ex = _filteredExercises[index];
+                                final ex = widget.exercises![index];
+                                final img = (ex['imageUrl'] ?? "").toString();
+
                                 return GestureDetector(
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (context) {
-                                          // if later WorkoutPage takes Exercise, you can pass it here
-                                          return const WorkoutPage();
+                                          return WorkoutDetailsPage(
+                                            exercises: widget.exercises!,
+                                          );
                                         },
                                       ),
                                     );
                                   },
                                   child: Container(
-                                    margin: EdgeInsets.symmetric(
-                                        horizontal: 17.sp, vertical: 6.sp),
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 15.sp, vertical: 12.sp),
+                                    margin: EdgeInsets.symmetric(horizontal: 17.sp, vertical: 6.sp),
+                                    padding: EdgeInsets.symmetric(horizontal: 15.sp, vertical: 12.sp),
                                     decoration: BoxDecoration(
                                       color: white.withAlpha(20),
                                       borderRadius: BorderRadius.circular(10.sp),
@@ -198,22 +217,15 @@ class _AllWorkoutsState extends State<AllWorkouts> {
                                           padding: EdgeInsets.all(8.sp),
                                           child: CircleAvatar(
                                             backgroundColor: Colors.transparent,
-                                            backgroundImage: ex.imageUrl != null &&
-                                                    ex.imageUrl!.isNotEmpty
-                                                ? NetworkImage(ex.imageUrl!)
-                                                    as ImageProvider
-                                                : const AssetImage(
-                                                    'assets/images/gym.png'),
                                           ),
                                         ),
                                         sizedwten(context),
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                ex.name,
+                                                ex['title'],
                                                 style: TextStyle(
                                                   color: const Color(0xFFB9F708),
                                                   fontSize: 16.sp,
@@ -221,13 +233,11 @@ class _AllWorkoutsState extends State<AllWorkouts> {
                                                 ),
                                               ),
                                               Text(
-                                                ex.description ??
-                                                    'No description provided',
+                                                ex['description'] ?? 'No description provided',
                                                 maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
-                                                  color: Colors.white
-                                                      .withOpacity(0.8),
+                                                  color: Colors.white.withOpacity(0.8),
                                                   fontSize: 14.sp,
                                                 ),
                                               ),
@@ -246,7 +256,87 @@ class _AllWorkoutsState extends State<AllWorkouts> {
                                   ),
                                 );
                               },
-                            ),
+                            )
+                          : _filteredExercises.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    "No workouts found",
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
+                                )
+                              : ListView.separated(
+                                  itemCount: _filteredExercises.length,
+                                  separatorBuilder: (context, index) {
+                                    return sizedfive(context);
+                                  },
+                                  itemBuilder: (context, index) {
+                                    final ex = _filteredExercises[index];
+                                    final img = (ex.imageUrl ?? "").toString();
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              // if later WorkoutPage takes Exercise, you can pass it here
+                                              return const WorkoutPage();
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Container(
+                                        margin: EdgeInsets.symmetric(horizontal: 17.sp, vertical: 6.sp),
+                                        padding: EdgeInsets.symmetric(horizontal: 15.sp, vertical: 12.sp),
+                                        decoration: BoxDecoration(
+                                          color: white.withAlpha(20),
+                                          borderRadius: BorderRadius.circular(10.sp),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              padding: EdgeInsets.all(8.sp),
+                                              child: CircleAvatar(
+                                                backgroundColor: Colors.transparent,
+                                                backgroundImage: img.isNotEmpty ? NetworkImage(img) : const AssetImage("assets/images/gym.png") as ImageProvider,
+                                              ),
+                                            ),
+                                            sizedwten(context),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    ex.name,
+                                                    style: TextStyle(
+                                                      color: const Color(0xFFB9F708),
+                                                      fontSize: 16.sp,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    ex.description ?? 'No description provided',
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      color: Colors.white.withOpacity(0.8),
+                                                      fontSize: 14.sp,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            SizedBox(width: 8.sp),
+                                            Icon(
+                                              Icons.play_circle_fill_rounded,
+                                              color: const Color(0xFFB9F708),
+                                              size: 20.sp,
+                                              semanticLabel: 'Play Workout',
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
             ),
           ],
         ),

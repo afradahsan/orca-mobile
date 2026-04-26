@@ -7,6 +7,7 @@ class CartService {
   final String baseUrl = "https://api.orcasportsclub.in/api/user/cart";
 
   Future<CartResponse> getCart(String token) async {
+    debugPrint('statement reached cart service with token: $token');
     final res = await http.get(
       Uri.parse(baseUrl),
       headers: {
@@ -47,17 +48,25 @@ class CartService {
     );
   }
 
-  Future<void> removeFromCart(String token, String productId) async {
-    final res = await http.delete(
+  Future<void> removeFromCart({
+    required String token,
+    required String cartId,
+  }) async {
+    debugPrint("Removing cart item $cartId");
+
+    final res = await http.put(
       Uri.parse(baseUrl),
       headers: {
         "Authorization": "Bearer $token",
         "Content-Type": "application/json",
       },
       body: jsonEncode({
-        "productId": productId,
+        "cartId": cartId,
+        "quantity": 0, // 👈 THIS triggers delete
       }),
     );
+
+    debugPrint("Remove cart response: ${res.body}");
 
     if (res.statusCode != 200) {
       throw Exception("Failed to remove item");
@@ -66,7 +75,7 @@ class CartService {
 
   Future<void> updateCart({
     required String token,
-    required String productId,
+    required String cartId,
     required int quantity,
   }) async {
     final res = await http.put(
@@ -76,10 +85,12 @@ class CartService {
         "Content-Type": "application/json",
       },
       body: jsonEncode({
-        "productId": productId,
+        "cartId": cartId,
         "quantity": quantity,
       }),
     );
+
+    debugPrint("Update Cart Response: ${res.body}");
 
     if (res.statusCode != 200) {
       throw Exception("Failed to update cart");

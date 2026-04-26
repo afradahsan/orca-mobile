@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Product {
   final String id;
   final String name;
@@ -7,7 +9,7 @@ class Product {
   final String brand;
   final String material;
   final List<String> images;
-final Map<String, dynamic> category;
+  final Map<String, dynamic> category;
   final double rating;
   final String status;
   final List<ProductSize> sizes;
@@ -27,23 +29,55 @@ final Map<String, dynamic> category;
     required this.sizes,
   });
 
-  factory Product.fromJson(Map<String, dynamic> json) {
+  factory Product.fromJson(dynamic json) {
+    if (json == null || json is! Map<String, dynamic>) {
+      // Log or handle the unexpected data type
+      print('Expected Map but got ${json.runtimeType}: $json');
+      return Product.empty(); // Assuming you have a static empty constructor
+    }
+
+    final categoryData = json['category'];
+
+    Map<String, dynamic> categoryMap = {};
+
+    if (categoryData is String) {
+      try {
+        final decodedCategory = jsonDecode(categoryData);
+        if (decodedCategory is Map<String, dynamic>) {
+          categoryMap = decodedCategory;
+        } else {
+          print('Decoded category is not a Map: ${decodedCategory.runtimeType}');
+        }
+      } catch (e) {
+        print('Error decoding category string: $e');
+      }
+    } else if (categoryData is Map<String, dynamic>) {
+      categoryMap = categoryData;
+    } else {
+      print('Unexpected type for category: ${categoryData.runtimeType}');
+    }
+
+    print('Parsing product: $json');
+    print('Expected Map but got ${json.runtimeType}: $json');
+
     return Product(
-      id: json['_id'],
-      name: json['name'],
-      description: json['description'],
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
       price: (json['price'] ?? 0).toString(),
       discount: (json['discount'] ?? 0).toDouble(),
       brand: json['brand'] ?? '',
       material: json['material'] ?? '',
       images: List<String>.from(json['images'] ?? []),
-      category: json['category'] ?? {},
+      category: categoryMap,
       rating: (json['rating'] ?? 0).toDouble(),
       status: json['status'] ?? '',
-      sizes: (json['sizes'] as List? ?? [])
-          .map((e) => ProductSize.fromJson(e))
-          .toList(),
+      sizes: (json['sizes'] as List? ?? []).map((e) => ProductSize.fromJson(e)).toList(),
     );
+  }
+
+  factory Product.empty() {
+    return Product(id: '', name: '', description: '', price: '', discount: 0, brand: '', material: '', images: [], category: {}, rating: 0, status: '', sizes: []);
   }
 
   Map<String, dynamic> toJson() => {
@@ -74,9 +108,7 @@ class ProductSize {
   factory ProductSize.fromJson(Map<String, dynamic> json) {
     return ProductSize(
       size: json['size'] ?? '',
-      colors: (json['colors'] as List? ?? [])
-          .map((e) => ProductColor.fromJson(e))
-          .toList(),
+      colors: (json['colors'] as List? ?? []).map((e) => ProductColor.fromJson(e)).toList(),
     );
   }
 

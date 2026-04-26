@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:orca/core/themes/text_theme.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/core/utils/constants.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart';
 import 'package:orca/features/ecom/data/product_model.dart';
 import 'package:orca/features/ecom/domain/cart_provider.dart';
 import 'package:orca/features/ecom/domain/product_repository.dart';
@@ -16,7 +17,10 @@ import 'package:shimmer/shimmer.dart';
 import 'package:sizer/sizer.dart';
 
 class EcomPage extends StatefulWidget {
-  const EcomPage({super.key});
+  const EcomPage({super.key, this.token});
+
+  final String? token;
+
   @override
   State<EcomPage> createState() => _EcomPageState();
 }
@@ -25,6 +29,7 @@ class _EcomPageState extends State<EcomPage> with AutomaticKeepAliveClientMixin 
   final ProductService _service = ProductService();
   late Future<List<Product>> _futureProducts;
   bool _loadedOnce = false;
+  var token;
 
   @override
   void initState() {
@@ -34,6 +39,22 @@ class _EcomPageState extends State<EcomPage> with AutomaticKeepAliveClientMixin 
       _futureProducts = _service.fetchAllProducts();
       _loadedOnce = true;
       debugPrint('future products - $_futureProducts');
+    }
+
+    _initializePage();
+  }
+
+  Future<void> _initializePage() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+
+    await auth.loadAuthData();
+
+    token = widget.token ?? auth.token;
+
+    debugPrint('Loaded token: $token');
+
+    if (token != null) {
+      await Provider.of<CartProvider>(context, listen: false).fetchCart(token);
     }
   }
 
@@ -171,28 +192,17 @@ class _EcomPageState extends State<EcomPage> with AutomaticKeepAliveClientMixin 
                   ],
                 ),
                 SizedBox(height: 8.sp),
-                Row(
-                  children: [
-                    if (orcaProducts.isEmpty)
-                      Text("No products yet", style: TextStyle(color: Colors.white54))
-                    else
-                      ...products.where((p) => p.brand.toLowerCase() == 'orca').map((p) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _smallProductCard(p),
-                          )),
-                    SizedBox(width: 50.sp),
-                    // Expanded(
-                    //     child: ProductCard(
-                    //   product: products[1],
-                    //   onTap: () {},
-                    //   showPrice: false,
-                    // )),
-                  ],
-                ),
+                if (orcaProducts.isEmpty)
+                  Text("No products yet", style: TextStyle(color: Colors.white54))
+                else
+                  ...products.where((p) => p.brand.toLowerCase() == 'orca').map((p) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _smallProductCard(p),
+                      )),
                 const SizedBox(height: 20),
                 _sectionTitle("SUPPLEMENTS"),
                 SizedBox(height: 4.sp),
-                ...products.where((e) => e.category['_id'] == '67d28c34b0a6538d1cd82f2b').map((e) => Padding(
+                ...products.where((e) => e.category['_id']?.toString() == '67d28c34b0a6538d1cd82f2b').map((e) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _smallProductCard(e),
                     )),
@@ -310,7 +320,7 @@ class _EcomPageState extends State<EcomPage> with AutomaticKeepAliveClientMixin 
               borderRadius: BorderRadius.circular(16),
               child: Image.network(
                 p.images.isNotEmpty ? p.images.first : 'https://via.placeholder.com/150',
-                width: double.infinity,
+                width: 150.sp,
                 height: 130.sp,
                 fit: BoxFit.cover,
               ),

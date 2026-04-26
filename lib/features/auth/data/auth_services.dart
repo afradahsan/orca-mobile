@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class AuthServices {
-  final String baseUrl = "https://orcasportsclub.in/api/user";
+  final String baseUrl = "https://api.orcasportsclub.in/api/user";
 
   Future<bool> checkUserByPhone(String phone) async {
     final uri = Uri.parse('$baseUrl/login');

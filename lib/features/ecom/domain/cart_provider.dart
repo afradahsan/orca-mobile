@@ -13,16 +13,20 @@ class CartProvider with ChangeNotifier {
   bool get isLoading => _loading;
 
   Future<void> fetchCart(String token) async {
-    _loading = true;
-    notifyListeners();
+    try {
+      _loading = true;
+      notifyListeners();
 
-    final res = await CartService().getCart(token);
+      final res = await CartService().getCart(token);
+      debugPrint('cart response: $res');
+      _items = res.items;
+      _totalPrice = res.totalPrice;
 
-    _items = res.items;
-    _totalPrice = res.totalPrice;
-
-    _loading = false;
-    notifyListeners();
+      _loading = false;
+      notifyListeners();
+    } on Exception catch (e) {
+      debugPrint('Error fetching cart: $e');
+    }
   }
 
   Future<void> addToCart({
@@ -31,42 +35,50 @@ class CartProvider with ChangeNotifier {
     required String size,
     required int quantity,
     required double price,
+    required String color,
   }) async {
-    await CartService().addToCart(token: token, productId: productId, size: size, quantity: quantity, price: price, color: 'default');
+    final updatedCart = await CartService().addToCart(
+      token: token,
+      productId: productId,
+      size: size,
+      color: color,
+      quantity: quantity,
+      price: price,
+    );
 
     await fetchCart(token);
   }
 
   Future<void> increaseQuantity({
     required String token,
-    required String productId,
+    required String cartId,
     required int quantity,
   }) async {
     await CartService().updateCart(
       token: token,
-      productId: productId,
-      quantity: quantity
+      cartId: cartId,
+      quantity: quantity + 1,
     );
-
     await fetchCart(token);
   }
 
-  Future<void> decreaseQuantity(int index, {
+  Future<void> decreaseQuantity({
     required String token,
-    required String productId,
+    required String cartId,
     required int quantity,
   }) async {
+    if (quantity <= 1) return;
+
     await CartService().updateCart(
       token: token,
-      productId: productId,
-      quantity: quantity,
+      cartId: cartId,
+      quantity: quantity - 1,
     );
-
     await fetchCart(token);
   }
 
-  Future<void> removeItem(String token, String productId) async {
-    await CartService().removeFromCart(token, productId);
+  Future<void> removeItem(String token, String cartId) async {
+    await CartService().removeFromCart(token: token, cartId: cartId);
     await fetchCart(token);
   }
 

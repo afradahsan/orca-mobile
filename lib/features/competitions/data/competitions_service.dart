@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:orca/features/competitions/data/competitions_model.dart';
 
 class CompetitionService {
-  final String baseUrl = "https://orcasportsclub.in/api/user";
+  final String baseUrl = "https://api.orcasportsclub.in/api/user";
 
   Future<List<Competition>> getCompetitions() async {
     final response = await http.get(Uri.parse("$baseUrl/competitions"));

@@ -134,11 +134,9 @@ class _ProgressiveSignupPageState extends State<ProgressiveSignupPage> {
       key: const ValueKey(1),
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text("Verify your phone",
-            style: TextStyle(color: white, fontSize: 22.sp, fontWeight: FontWeight.bold)),
+        Text("Verify your phone", style: TextStyle(color: white, fontSize: 22.sp, fontWeight: FontWeight.bold)),
         SizedBox(height: 10.sp),
-        Text("We’ve sent an OTP to ${widget.phoneNumber}",
-            style: TextStyle(color: whitet150), textAlign: TextAlign.center),
+        Text("We’ve sent an OTP to ${widget.phoneNumber}", style: TextStyle(color: whitet150), textAlign: TextAlign.center),
         SizedBox(height: 25.sp),
         TextField(
           controller: otpController,
@@ -159,7 +157,14 @@ class _ProgressiveSignupPageState extends State<ProgressiveSignupPage> {
           ),
         ),
         SizedBox(height: 20.sp),
-        _adaptiveButton(label: "Verify OTP", onPressed: _verifyOtp),
+        _adaptiveButton(
+            label: "Verify OTP",
+            onPressed: () {
+              //stationary for now, In real call _verifyOtp() here.
+              setState(() {
+                _step = 2;
+              });
+            }),
         TextButton(
           onPressed: _sendOtp,
           child: Text("Resend OTP", style: TextStyle(color: green, fontWeight: FontWeight.bold)),

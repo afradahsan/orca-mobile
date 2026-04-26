@@ -61,18 +61,23 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
           SafeArea(
             child: AnimatedSwitcher(
               duration:  const Duration(milliseconds: 100),
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  EcomPage(),
-                  FitnessPage(
-                    token: widget.token,
-                  ),
-                  CompetitionsPage(drawerController: CustomDrawerController(), drawerContentNotifier: _drawerContentNotifier),
-                  ProfilePage(
-                    token: widget.token
-                  )
-                ],
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 64),
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    EcomPage(
+                      token: widget.token,
+                    ),
+                    FitnessPage(
+                      token: widget.token,
+                    ),
+                    CompetitionsPage(drawerController: CustomDrawerController(), drawerContentNotifier: _drawerContentNotifier),
+                    ProfilePage(
+                      token: widget.token
+                    )
+                  ],
+                ),
               ),
             ),
           ),

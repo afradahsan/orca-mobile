@@ -107,8 +107,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 style: ElevatedButton.styleFrom(backgroundColor: green),
                 onPressed: () {
                   final cart = Provider.of<CartProvider>(context, listen: false);
-                  final double price = double.parse(widget.product.price);
-                  cart.addToCart(token: token, productId: widget.product.id, size: selectedSize!, quantity: _quantity, price: price);
+                  final double price = double.parse(widget.product.price.toString());
+                  cart.addToCart(token: token, productId: widget.product.id, size: selectedSize!, quantity: _quantity, price: price, color: widget.product.sizes.firstWhere((s) => s.size == selectedSize!).colors[0].color);
 
                   // Bounce animation
                   setState(() {
@@ -212,7 +212,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         color: green,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text('Member Price - ₹${(double.parse(widget.product.price) - 250).toInt()}', style: TextStyle(fontSize: 14.sp, color: Colors.black)),
+                      child: Text('Member Price - ₹${(double.parse(widget.product.price.toString()) - 250).toInt()}', style: TextStyle(fontSize: 14.sp, color: Colors.black)),
                     ),
                   ],
                 ),

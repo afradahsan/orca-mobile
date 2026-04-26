@@ -19,18 +19,21 @@ class CartPage extends StatefulWidget {
 
 class _CartPageState extends State<CartPage> {
   String token = "";
-  
+
   @override
   void initState() {
     super.initState();
-    loadAddresses();
+    _loadCart();
   }
 
-  Future<void> loadAddresses() async {
+  Future<void> _loadCart() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     await auth.loadAuthData();
+    debugPrint("Auth Token: ${auth.token}");
 
-    token = auth.token ?? "idk";
+    token = auth.token!;
+
+    await Provider.of<CartProvider>(context, listen: false).fetchCart(token);
   }
 
   Widget build(BuildContext context) {
@@ -50,6 +53,12 @@ class _CartPageState extends State<CartPage> {
       ),
       body: Consumer<CartProvider>(
         builder: (context, cart, child) {
+          if (cart.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
           if (cart.items.isEmpty) {
             return Center(
               child: Text(
@@ -64,6 +73,8 @@ class _CartPageState extends State<CartPage> {
             itemCount: cart.items.length,
             itemBuilder: (context, index) {
               final item = cart.items[index];
+              debugPrint('cartitem: $item');
+              debugPrint('Cart Item: ${item.product.id}Quantity: ${item.quantity}, Price: ${item.price}');
               return Container(
                 margin: EdgeInsets.only(bottom: 12.sp),
                 decoration: BoxDecoration(
@@ -75,7 +86,7 @@ class _CartPageState extends State<CartPage> {
                   leading: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: Image.network(
-                      item.product.images[index],
+                      item.product.images.isNotEmpty ? item.product.images.first : "https://via.placeholder.com/150",
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
@@ -93,21 +104,19 @@ class _CartPageState extends State<CartPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: Text("-", style: KTextTheme.dottedDark.bodyLarge),
-                        onPressed:   () => cart.decreaseQuantity(index, token: token, productId: cart.items[index].product.id, quantity: cart.items[index].quantity),
-                      ),
+                          icon: Text("-", style: KTextTheme.dottedDark.bodyLarge!.copyWith(color: item.quantity == 1 ? white.withAlpha(50) : white)),
+                          onPressed: item.quantity == 1 ? () {} : () => cart.decreaseQuantity(token: token, cartId: item.id, quantity: item.quantity)),
                       Text(
                         '${item.quantity}',
                         style: KTextTheme.dottedDark.bodyLarge,
                       ),
+                      IconButton(icon: Text("+", style: KTextTheme.dottedDark.bodyLarge), onPressed: () => cart.increaseQuantity(token: token, cartId: item.id, quantity: item.quantity)),
                       IconButton(
-                        icon: Text("+", style: KTextTheme.dottedDark.bodyLarge),
-                        onPressed: () => cart.increaseQuantity(token: token, productId: cart.items[index].product.id, quantity: cart.items[index].quantity),
-                      ),
-                      IconButton(
-                        icon: Image.asset('assets/icons/bin-dotted.png', height: 24.sp, color: Colors.red),
-                        onPressed: () => cart.removeItem('', ''),
-                      ),
+                          icon: Image.asset('assets/icons/bin-dotted.png', height: 24.sp, color: Colors.red),
+                          onPressed: () {
+                            debugPrint("Removing item -- ${item.product.id} from cart with $token");
+                            cart.removeItem(token, item.id);
+                          }),
                     ],
                   ),
                 ),
@@ -149,7 +158,10 @@ class _CartPageState extends State<CartPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => CheckoutAddressPage(totalAmount: cart.totalPrice,)),
+                      MaterialPageRoute(
+                          builder: (_) => CheckoutAddressPage(
+                                totalAmount: cart.totalPrice,
+                              )),
                     );
                   },
                   child: Text(

@@ -64,7 +64,7 @@ class ProductCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          product.price,
+                          product.price.toString(),
                           style: const TextStyle(
                               color: Colors.white70, fontSize: 12),
                         ),
