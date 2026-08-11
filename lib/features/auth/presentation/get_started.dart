@@ -3,11 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:neopop/neopop.dart';
 import 'package:orca/core/utils/colors.dart';
-import 'package:orca/features/auth/presentation/age_select.dart';
 import 'package:orca/features/auth/presentation/gym_owner_login.dart';
-import 'package:orca/features/auth/presentation/login_page.dart';
 import 'package:orca/features/auth/presentation/phone_number.dart';
-import 'package:orca/features/auth/presentation/signup_page.dart';
 import 'package:orca/features/home/presentation/bottomnav.dart';
 import 'package:sizer/sizer.dart';
 

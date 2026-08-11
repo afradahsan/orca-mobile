@@ -2,17 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:orca/core/utils/bottom_sheet.dart';
 import 'package:orca/core/utils/colors.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart';
 import 'package:orca/features/competitions/presentations/competitions_page.dart';
+import 'package:orca/features/ecom/data/order_model.dart';
 import 'package:orca/features/ecom/presentation/ecom_page.dart';
 import 'package:orca/features/fitness/presentations/fitness_page.dart';
 import 'package:orca/features/home/presentation/profile_page.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 class NavBarPage extends StatefulWidget {
-  const NavBarPage({super.key, this.initialTabIndex = 0, this.token});
+  const NavBarPage({
+    super.key,
+    this.initialTabIndex = 0,
+  });
 
   final int initialTabIndex;
-  final String? token;
 
   @override
   State<NavBarPage> createState() => _NavBarPageState();
@@ -31,6 +36,22 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
     {'icon': "assets/images/winner-medal.png", 'label': 'Competitions'},
     {'icon': "assets/images/people.png", 'label': 'Profile'},
   ];
+
+  String? token = '';
+
+  Future loadOrders() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+
+    await auth.loadAuthData();
+
+    token = auth.token;
+
+    debugPrint("Resolved token: $token");
+
+    if (token == null) {
+      throw Exception("No token");
+    }
+  }
 
   @override
   void initState() {
@@ -60,22 +81,20 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
         children: [
           SafeArea(
             child: AnimatedSwitcher(
-              duration:  const Duration(milliseconds: 100),
+              duration: const Duration(milliseconds: 100),
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 64),
                 child: TabBarView(
                   controller: _tabController,
                   children: [
                     EcomPage(
-                      token: widget.token,
+                      token: token,
                     ),
                     FitnessPage(
-                      token: widget.token,
+                      token: token,
                     ),
                     CompetitionsPage(drawerController: CustomDrawerController(), drawerContentNotifier: _drawerContentNotifier),
-                    ProfilePage(
-                      token: widget.token
-                    )
+                    ProfilePage(token: token!)
                   ],
                 ),
               ),

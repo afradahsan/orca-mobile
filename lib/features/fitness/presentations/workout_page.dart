@@ -41,9 +41,6 @@ class WorkoutPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16.sp),
-            // Text('Workout Description',
-            //     style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w600)),
-            // SizedBox(height: 6.sp),
             Text(
                 'This full body workout is perfect for beginners and requires no equipment. It targets all major muscle groups to improve strength, flexibility, and endurance. Repeat 3 rounds for better results.',
                 style: TextStyle(

@@ -9,7 +9,9 @@ import 'package:orca/features/home/presentation/bottomnav.dart';
 import 'package:sizer/sizer.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({required this.token, super.key});
+
+  final String token;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -20,7 +22,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
 
   bool _useEmail = false;
-  String _selectedCountryCode = '+91';
 
   @override
   Widget build(BuildContext context) {
@@ -150,6 +151,7 @@ class _LoginPageState extends State<LoginPage> {
                       MaterialPageRoute(
                           builder: (_) => OtpVerifyScreen(
                                 phoneNumber: phoneController.text,
+                                token: widget.token,
                               )),
                     );
                   },

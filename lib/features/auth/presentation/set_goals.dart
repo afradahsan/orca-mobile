@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:neopop/widgets/buttons/neopop_button/neopop_button.dart';
 import 'package:orca/core/utils/colors.dart';
-import 'package:orca/features/auth/presentation/signup_page.dart';
 import 'package:orca/features/home/presentation/bottomnav.dart';
 import 'package:sizer/sizer.dart';
 

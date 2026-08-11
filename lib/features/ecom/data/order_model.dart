@@ -13,13 +13,15 @@ class Order {
     required this.items,
   });
 
-  factory Order.fromJson(Map<String,dynamic> json) {
+  factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
-      id: json['_id'],
-      status: json['status'],
-      total: (json['totalPrice'] ?? 0).toDouble(),
+      id: json['_id'] ?? '',
+      status: json['status'] ?? '',
+      total: (json['grandTotal'] ?? 0).toDouble(),
       createdAt: DateTime.parse(json['createdAt']),
-      items: (json['items'] as List).map((i)=>OrderItem.fromJson(i)).toList(),
+      items: (json['products'] as List<dynamic>? ?? [])
+          .map((e) => OrderItem.fromJson(e))
+          .toList(),
     );
   }
 }
@@ -35,11 +37,16 @@ class OrderItem {
     required this.price,
   });
 
-  factory OrderItem.fromJson(Map<String,dynamic> json) {
+  factory OrderItem.fromJson(Map<String, dynamic> json) {
+    final product = json['product'] ?? {};
+
     return OrderItem(
-      productName: json['productId']['name'],
-      image: json['productId']['images'][0],
-      price: (json['price']).toDouble(),
+      productName: product['name'] ?? '',
+      image: (product['images'] != null &&
+              (product['images'] as List).isNotEmpty)
+          ? product['images'][0]
+          : '',
+      price: (json['price'] ?? 0).toDouble(),
     );
   }
 }

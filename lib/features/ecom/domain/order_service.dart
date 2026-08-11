@@ -5,14 +5,13 @@ import 'package:orca/features/ecom/data/order_model.dart';
 import 'package:http/http.dart' as http;
 
 class OrderService {
-  final String baseUrl =
-      'https://api.orcasportsclub.in/api/orders';
+  final String baseUrl = 'https://api.orcasportsclub.in/api/orders';
 
   Future<List<Order>> fetchOrders(String token) async {
     debugPrint('fetch called');
 
     final res = await http.get(
-      Uri.parse(baseUrl),   // ✅ correct
+      Uri.parse(baseUrl), // ✅ correct
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer $token",
@@ -24,7 +23,12 @@ class OrderService {
 
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
-      return data.map<Order>((o) => Order.fromJson(o)).toList();
+      debugPrint("DATA TYPE: ${data.runtimeType}");
+      debugPrint("ITEMS TYPE: ${data['items'].runtimeType}");
+
+      final List<dynamic> items = data['items'] ?? [];
+
+      return items.map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();
     } else {
       throw Exception("Failed to load orders");
     }

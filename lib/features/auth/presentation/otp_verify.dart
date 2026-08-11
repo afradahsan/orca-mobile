@@ -6,9 +6,10 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sizer/sizer.dart';
 
 class OtpVerifyScreen extends StatefulWidget {
-  const OtpVerifyScreen({required this.phoneNumber, super.key});
+  const OtpVerifyScreen({required this.phoneNumber, required this.token, super.key});
 
   final String phoneNumber;
+  final String token;
 
   @override
   State<OtpVerifyScreen> createState() => _OtpVerifyScreenState();
@@ -90,7 +91,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                 // You can use controller.text and _selectedCountryCode here
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const NavBarPage()),
+                  MaterialPageRoute(builder: (_) => NavBarPage()),
                 );
               },
               child: Center(

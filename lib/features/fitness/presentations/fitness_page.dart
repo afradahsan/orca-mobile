@@ -325,7 +325,7 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
           );
         },
         child: Icon(
-          Icons.fitness_center,
+          Icons.calendar_today_rounded,
           size: 18.sp,
           color: Colors.black,
         ),

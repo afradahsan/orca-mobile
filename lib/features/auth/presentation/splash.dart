@@ -46,14 +46,14 @@ class _SplashScreenState extends State<SplashScreen> {
       case "Admin":
         Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => NavBarPage(token: auth.token!,)),
+        MaterialPageRoute(builder: (_) => NavBarPage()),
       );
         break;
 
       default:
         Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => NavBarPage(token: auth.token!,)),
+        MaterialPageRoute(builder: (_) => NavBarPage()),
       );
     }
   }

@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/features/auth/data/auth_services.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart';
 import 'package:orca/features/auth/domain/auth_repo.dart';
 import 'package:orca/features/auth/presentation/get_started.dart';
 import 'package:orca/features/home/presentation/my_orders.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({required this.token, super.key});
 
-  final String? token;
+  final String token;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -133,6 +135,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('token: ${widget.token}');
+    final auth = Provider.of<AuthProvider>(context, listen: false);
     return Scaffold(
       backgroundColor: const Color(0xFF0E0E0E),
       body: SafeArea(
@@ -325,7 +329,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => MyOrders(token: widget.token),
+                          builder: (_) => MyOrders(),
                         ),
                       );
                     },
