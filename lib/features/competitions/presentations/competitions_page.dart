@@ -6,6 +6,7 @@ import 'package:orca/features/competitions/presentations/all_competitions.dart';
 import 'package:orca/features/competitions/presentations/competition_details.dart';
 import 'package:sizer/sizer.dart';
 import 'package:orca/core/utils/colors.dart';
+import 'package:orca/features/notifications/presentation/notification_bell.dart';
 
 class CompetitionsPage extends StatefulWidget {
   final CustomDrawerController drawerController;
@@ -82,10 +83,16 @@ class _CompetitionsPageState extends State<CompetitionsPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          /// TITLE
-                          Text(
-                            "Competitions",
-                            style: TextStyle(color: Colors.white, fontSize: 21.sp, fontWeight: FontWeight.w700),
+                          /// TITLE ROW WITH NOTIFICATION BELL
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Competitions",
+                                style: TextStyle(color: Colors.white, fontSize: 21.sp, fontWeight: FontWeight.w700),
+                              ),
+                              const NotificationBell(),
+                            ],
                           ),
 
                           SizedBox(height: 2.h),

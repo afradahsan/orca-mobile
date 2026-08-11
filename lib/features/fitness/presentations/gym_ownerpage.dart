@@ -14,6 +14,7 @@ import 'package:orca/features/fitness/domain/challenge_task_model.dart';
 import 'package:orca/features/fitness/domain/exercise_model.dart';
 import 'package:orca/features/fitness/domain/guide_model.dart';
 import 'package:orca/features/fitness/domain/member_model.dart';
+import 'package:orca/features/notifications/domain/notification_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
@@ -150,6 +151,65 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
                       ),
                     ),
                   ],
+                ),
+
+                SizedBox(height: 16.sp),
+
+                // Push In-App Notification Card
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(14.sp),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [green.withOpacity(0.2), Colors.grey[900]!],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: green.withOpacity(0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(10.sp),
+                        decoration: BoxDecoration(
+                          color: green.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.campaign_rounded, color: green, size: 24.sp),
+                      ),
+                      SizedBox(width: 12.sp),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Push In-App Notification',
+                              style: TextStyle(color: white, fontSize: 14.sp, fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: 2.sp),
+                            Text(
+                              'Broadcast competitions, fitness news & events to all users',
+                              style: TextStyle(color: Colors.white70, fontSize: 10.sp),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 8.sp),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: green,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 8.sp),
+                        ),
+                        onPressed: _sendNotificationForm,
+                        child: Text(
+                          'Push',
+                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 11.sp),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
                 SizedBox(height: 22.sp),
@@ -895,6 +955,134 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
           )
         ],
       ),
+    );
+  }
+
+  void _sendNotificationForm() {
+    String title = "";
+    String message = "";
+    String category = "Competition";
+    String actionTarget = "competitions";
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: const Color(0xFF0A0F0A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.sp),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(18.sp),
+            child: StatefulBuilder(
+              builder: (context, setSB) {
+                return SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.campaign, color: green, size: 20.sp),
+                          SizedBox(width: 8.sp),
+                          Text(
+                            "Push Announcement",
+                            style: TextStyle(
+                              color: green,
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 14.sp),
+                      _styledField(
+                        label: "Title (e.g. New Competition!)",
+                        onChanged: (v) => title = v,
+                      ),
+                      _styledField(
+                        label: "Message Body / Details",
+                        maxLines: 3,
+                        onChanged: (v) => message = v,
+                      ),
+                      SizedBox(height: 10.sp),
+                      _dropdown(
+                        "Category",
+                        category,
+                        ["Competition", "Fitness", "General", "Merch"],
+                        (v) => setSB(() {
+                          category = v;
+                          if (v == "Competition") actionTarget = "competitions";
+                          else if (v == "Fitness") actionTarget = "fitness";
+                          else if (v == "Merch") actionTarget = "ecom";
+                          else actionTarget = "";
+                        }),
+                      ),
+                      SizedBox(height: 18.sp),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("Cancel", style: TextStyle(color: white)),
+                          ),
+                          SizedBox(width: 12),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: green,
+                              padding: EdgeInsets.symmetric(horizontal: 18.sp, vertical: 10.sp),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.sp),
+                              ),
+                            ),
+                            onPressed: () async {
+                              if (title.trim().isEmpty || message.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Please enter both title and message")),
+                                );
+                                return;
+                              }
+
+                              final notifProvider = Provider.of<NotificationProvider>(context, listen: false);
+                              await notifProvider.addNotification(
+                                title: title.trim(),
+                                message: message.trim(),
+                                category: category,
+                                actionTarget: actionTarget.isNotEmpty ? actionTarget : null,
+                              );
+
+                              if (mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.check_circle, color: Colors.black),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            "Notification pushed successfully!",
+                                            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: green,
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Text("Push Now", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 

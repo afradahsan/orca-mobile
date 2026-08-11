@@ -8,6 +8,7 @@ import 'package:orca/features/ecom/data/order_model.dart';
 import 'package:orca/features/ecom/presentation/ecom_page.dart';
 import 'package:orca/features/fitness/presentations/fitness_page.dart';
 import 'package:orca/features/home/presentation/profile_page.dart';
+import 'package:orca/features/notifications/presentation/notification_bell.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
@@ -97,6 +98,23 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
                     ProfilePage(token: token!)
                   ],
                 ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 14.sp,
+            top: 10.sp,
+            child: SafeArea(
+              child: NotificationBell(
+                onNotificationNavigate: (target) {
+                  if (target == 'competitions') {
+                    _tabController.animateTo(2);
+                  } else if (target == 'fitness') {
+                    _tabController.animateTo(1);
+                  } else if (target == 'ecom') {
+                    _tabController.animateTo(0);
+                  }
+                },
               ),
             ),
           ),

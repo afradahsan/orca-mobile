@@ -9,6 +9,7 @@ import 'package:orca/features/ecom/domain/cart_provider.dart';
 import 'package:orca/features/fitness/domain/role_provider.dart';
 import 'package:orca/features/home/presentation/home_page.dart';
 import 'package:orca/firebase_options.dart';
+import 'package:orca/features/notifications/domain/notification_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
@@ -25,6 +26,7 @@ void main() async {
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(create: (_) => RoleProvider()),
     ChangeNotifierProvider(create: (_) => CartProvider()),
+    ChangeNotifierProvider(create: (_) => NotificationProvider()),
     ChangeNotifierProvider<AuthProvider>.value(value: auth),
   ], child: const MyApp()));
 }
