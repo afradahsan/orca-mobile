@@ -34,6 +34,7 @@ class GymOwnerPage extends StatefulWidget {
 
 class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int _selectedTab = 0; // 0: Exercises, 1: Members, 2: Challenges, 3: Guides, 4: Announcements Log
 
   List exercises = [];
   List<Challenge> challenges = [];
@@ -107,227 +108,698 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final notifProvider = Provider.of<NotificationProvider>(context);
+
     return Scaffold(
       backgroundColor: darkgreen,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.sp, vertical: 8.sp),
-          child: SingleChildScrollView(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 8.sp),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 5.sp),
-                        Text(
-                          'Welcome Back Owner!',
-                          style: TextStyle(
-                            color: white,
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Manage your Fitness Center',
-                          style: TextStyle(
-                            color: green,
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 10.sp),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        const NotificationBell(),
-                        SizedBox(width: 8.sp),
-                        GestureDetector(
-                          onTap: () {
-                            debugPrint('logg out');
-                            Provider.of<AuthProvider>(context, listen: false).logout();
-                            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => GetStarted()), (route) => false);
-                          },
-                          child: CircleAvatar(
-                            radius: 18.sp,
-                            backgroundImage: const AssetImage('assets/images/gym.png'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                // 1️⃣ Header Bar with Title, Bell & Logout
+                _buildAdminHeader(),
+                SizedBox(height: 14.sp),
 
+                // 2️⃣ Hero Push Announcement Card
+                _buildHeroPushCard(),
                 SizedBox(height: 16.sp),
 
-                // Push In-App Notification Card
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(14.sp),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [green.withOpacity(0.2), Colors.grey[900]!],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: green.withOpacity(0.4)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(10.sp),
-                        decoration: BoxDecoration(
-                          color: green.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.campaign_rounded, color: green, size: 24.sp),
-                      ),
-                      SizedBox(width: 12.sp),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Push In-App Notification',
-                              style: TextStyle(color: white, fontSize: 14.sp, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 2.sp),
-                            Text(
-                              'Broadcast competitions, fitness news & events to all users',
-                              style: TextStyle(color: Colors.white70, fontSize: 10.sp),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: 8.sp),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: green,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 8.sp),
-                        ),
-                        onPressed: _sendNotificationForm,
-                        child: Text(
-                          'Push',
-                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 11.sp),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // 3️⃣ Metrics Overview 2x2 Grid
+                _buildMetricsGrid(notifProvider.notifications.length),
+                SizedBox(height: 18.sp),
 
-                SizedBox(height: 22.sp),
+                // 4️⃣ Segmented Tab Bar Navigation
+                _buildSegmentedTabNav(),
+                SizedBox(height: 14.sp),
 
-                Row(
-                  children: [
-                    Text(
-                      'Exercises',
-                      style: TextStyle(color: white, fontSize: 18.sp, fontWeight: FontWeight.bold),
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: _addExerciseForm,
-                      child: Icon(Icons.add_circle, color: green, size: 22.sp),
-                    ),
-                  ],
-                ),
+                // 5️⃣ Active Tab Section Header (+ Add Button)
+                _buildActiveTabHeader(),
                 SizedBox(height: 10.sp),
-                _horizontalScroll(
-                  exercises
-                      .map((e) => _dashboardCard(
-                            title: e.name,
-                            subtitle: "${e.duration} sec",
-                            onTap: () => {},
-                          ))
-                      .toList(),
-                ),
 
+                // 6️⃣ Active Content Display
+                _buildActiveTabContent(notifProvider),
                 SizedBox(height: 24.sp),
-                Row(
-                  children: [
-                    Text("Members", style: TextStyle(color: white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
-                    Spacer(),
-                    GestureDetector(
-                      onTap: _addMemberForm,
-                      child: Icon(Icons.person_add, color: green, size: 22.sp),
-                    )
-                  ],
-                ),
-                SizedBox(height: 10.sp),
-
-                _horizontalScroll(
-                  memberUsers
-                      .map((m) => _dashboardCard(
-                            title: m.name,
-                            subtitle: m.email,
-                            onTap: () {},
-                          ))
-                      .toList(),
-                ),
-
-                SizedBox(height: 24.sp),
-
-                // ===== Challenges Section =====
-                Row(
-                  children: [
-                    Text(
-                      'Challenges',
-                      style: TextStyle(color: white, fontSize: 18.sp, fontWeight: FontWeight.bold),
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: _addChallengeForm,
-                      child: Icon(Icons.add_circle, color: green, size: 22.sp),
-                    )
-                  ],
-                ),
-                SizedBox(height: 10.sp),
-                // _horizontalScroll(
-                //   challenges
-                //       .map((c) => _dashboardCard(
-                //             title: c.title,
-                //             subtitle: "Target: ${c.difficulty}",
-                //             onTap: () {},
-                //           ))
-                //       .toList(),
-                // ),
-
-                SizedBox(height: 24.sp),
-
-                // ===== Guides Section =====
-                Row(
-                  children: [
-                    Text(
-                      'Guides',
-                      style: TextStyle(color: white, fontSize: 18.sp, fontWeight: FontWeight.bold),
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: _addGuideForm,
-                      child: Icon(Icons.add_circle, color: green, size: 22.sp),
-                    )
-                  ],
-                ),
-                SizedBox(height: 10.sp),
-                _horizontalScroll(
-                  guides
-                      .map((g) => _dashboardCard(
-                            title: g.title,
-                            subtitle: g.category,
-                            onTap: () {},
-                          ))
-                      .toList(),
-                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildAdminHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Admin Portal',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              'ORCA Fitness Control Center',
+              style: TextStyle(
+                color: green,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            const NotificationBell(),
+            SizedBox(width: 8.sp),
+            GestureDetector(
+              onTap: () {
+                Provider.of<AuthProvider>(context, listen: false).logout();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const GetStarted()),
+                  (route) => false,
+                );
+              },
+              child: Container(
+                padding: EdgeInsets.all(6.sp),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
+                ),
+                child: Icon(Icons.logout, color: Colors.redAccent, size: 16.sp),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeroPushCard() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14.sp),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [green.withOpacity(0.25), Colors.grey[900]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: green.withOpacity(0.5), width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(10.sp),
+            decoration: BoxDecoration(
+              color: green.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.campaign_rounded, color: green, size: 24.sp),
+          ),
+          SizedBox(width: 12.sp),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Push In-App Announcement',
+                  style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 2.sp),
+                Text(
+                  'Broadcast competitions, workouts & news to users',
+                  style: TextStyle(color: Colors.white70, fontSize: 10.sp),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 6.sp),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 8.sp),
+            ),
+            onPressed: _sendNotificationForm,
+            icon: const Icon(Icons.send_rounded, color: Colors.black, size: 14),
+            label: Text(
+              'Push',
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 11.sp),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricsGrid(int notifCount) {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 10.sp,
+      mainAxisSpacing: 10.sp,
+      childAspectRatio: 2.4,
+      children: [
+        _metricTile('Exercises', '${exercises.length}', Icons.fitness_center, green, 0),
+        _metricTile('Members', '${memberUsers.length}', Icons.people_alt, Colors.cyanAccent, 1),
+        _metricTile('Challenges', '${challenges.length}', Icons.emoji_events, Colors.amber, 2),
+        _metricTile('Broadcasts', '$notifCount', Icons.notifications_active, Colors.purpleAccent, 4),
+      ],
+    );
+  }
+
+  Widget _metricTile(String label, String value, IconData icon, Color color, int tabIndex) {
+    final isSelected = _selectedTab == tabIndex;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTab = tabIndex),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 8.sp),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.15) : Colors.grey[900],
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? color : Colors.white12,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(6.sp),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 16.sp),
+            ),
+            SizedBox(width: 8.sp),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    value,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 9.sp,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentedTabNav() {
+    final tabs = [
+      {'label': 'Exercises', 'icon': Icons.fitness_center},
+      {'label': 'Members', 'icon': Icons.people},
+      {'label': 'Challenges', 'icon': Icons.emoji_events},
+      {'label': 'Guides', 'icon': Icons.menu_book},
+      {'label': 'Log', 'icon': Icons.history},
+    ];
+
+    return SizedBox(
+      height: 34.sp,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: tabs.length,
+        itemBuilder: (context, index) {
+          final isSelected = _selectedTab == index;
+          return Padding(
+            padding: EdgeInsets.only(right: 8.sp),
+            child: ChoiceChip(
+              avatar: Icon(
+                tabs[index]['icon'] as IconData,
+                size: 13.sp,
+                color: isSelected ? Colors.black : Colors.white70,
+              ),
+              label: Text(tabs[index]['label'] as String),
+              selected: isSelected,
+              onSelected: (_) => setState(() => _selectedTab = index),
+              selectedColor: green,
+              backgroundColor: Colors.grey[900],
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.black : Colors.white70,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 10.sp,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected ? green : Colors.white12,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildActiveTabHeader() {
+    String title = "";
+    VoidCallback? onAdd;
+    String addLabel = "+ Add";
+
+    switch (_selectedTab) {
+      case 0:
+        title = "Exercises (${exercises.length})";
+        onAdd = _addExerciseForm;
+        addLabel = "+ Exercise";
+        break;
+      case 1:
+        title = "Gym Members (${memberUsers.length})";
+        onAdd = _addMemberForm;
+        addLabel = "+ Member";
+        break;
+      case 2:
+        title = "Challenges (${challenges.length})";
+        onAdd = _addChallengeForm;
+        addLabel = "+ Challenge";
+        break;
+      case 3:
+        title = "PDF Guides (${guides.length})";
+        onAdd = _addGuideForm;
+        addLabel = "+ Guide";
+        break;
+      case 4:
+        title = "Broadcast History";
+        onAdd = _sendNotificationForm;
+        addLabel = "+ Push Alert";
+        break;
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14.sp,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        if (onAdd != null)
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 6.sp),
+            ),
+            onPressed: onAdd,
+            icon: const Icon(Icons.add, color: Colors.black, size: 14),
+            label: Text(
+              addLabel,
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10.sp),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildActiveTabContent(NotificationProvider notifProvider) {
+    switch (_selectedTab) {
+      case 0:
+        return _buildExercisesList();
+      case 1:
+        return _buildMembersList();
+      case 2:
+        return _buildChallengesList();
+      case 3:
+        return _buildGuidesList();
+      case 4:
+        return _buildAnnouncementsList(notifProvider);
+      default:
+        return const SizedBox();
+    }
+  }
+
+  Widget _buildEmptyState(String message, IconData icon, VoidCallback? onAction, String? actionLabel) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(24.sp),
+      decoration: BoxDecoration(
+        color: Colors.grey[900]?.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.white24, size: 36.sp),
+          SizedBox(height: 10.sp),
+          Text(
+            message,
+            style: TextStyle(color: Colors.white60, fontSize: 12.sp),
+            textAlign: TextAlign.center,
+          ),
+          if (onAction != null && actionLabel != null) ...[
+            SizedBox(height: 12.sp),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: green,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: onAction,
+              child: Text(
+                actionLabel,
+                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ]
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExercisesList() {
+    if (exercises.isEmpty) {
+      return _buildEmptyState("No exercises added yet", Icons.fitness_center, _addExerciseForm, "+ Add Exercise");
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: exercises.length,
+      itemBuilder: (context, index) {
+        final e = exercises[index];
+        return Container(
+          margin: EdgeInsets.only(bottom: 8.sp),
+          padding: EdgeInsets.all(12.sp),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.sp),
+                decoration: BoxDecoration(
+                  color: green.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.fitness_center, color: green, size: 18.sp),
+              ),
+              SizedBox(width: 12.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      e.name ?? 'Exercise',
+                      style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 2.sp),
+                    Text(
+                      "${e.duration ?? 0} sec | ${e.category ?? 'General'}",
+                      style: TextStyle(color: Colors.white60, fontSize: 10.sp),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                onPressed: () {
+                  setState(() {
+                    exercises.removeAt(index);
+                  });
+                },
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMembersList() {
+    if (memberUsers.isEmpty) {
+      return _buildEmptyState("No members added yet", Icons.person_off, _addMemberForm, "+ Add Member");
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: memberUsers.length,
+      itemBuilder: (context, index) {
+        final m = memberUsers[index];
+        return Container(
+          margin: EdgeInsets.only(bottom: 8.sp),
+          padding: EdgeInsets.all(12.sp),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.cyanAccent.withOpacity(0.2),
+                child: Icon(Icons.person, color: Colors.cyanAccent, size: 18.sp),
+              ),
+              SizedBox(width: 12.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      m.name,
+                      style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 2.sp),
+                    Text(
+                      m.email.isNotEmpty ? m.email : (m.phone ?? 'No contact'),
+                      style: TextStyle(color: Colors.white60, fontSize: 10.sp),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 4.sp),
+                decoration: BoxDecoration(
+                  color: green.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Member',
+                  style: TextStyle(color: green, fontSize: 9.sp, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildChallengesList() {
+    if (challenges.isEmpty) {
+      return _buildEmptyState("No active challenges yet", Icons.emoji_events_outlined, _addChallengeForm, "+ Add Challenge");
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: challenges.length,
+      itemBuilder: (context, index) {
+        final c = challenges[index];
+        return Container(
+          margin: EdgeInsets.only(bottom: 8.sp),
+          padding: EdgeInsets.all(12.sp),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.sp),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.emoji_events, color: Colors.amber, size: 18.sp),
+              ),
+              SizedBox(width: 12.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      c.title,
+                      style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 2.sp),
+                    Text(
+                      "Difficulty: ${c.difficulty}",
+                      style: TextStyle(color: Colors.white60, fontSize: 10.sp),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGuidesList() {
+    if (guides.isEmpty) {
+      return _buildEmptyState("No PDF guides uploaded yet", Icons.menu_book, _addGuideForm, "+ Upload Guide");
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: guides.length,
+      itemBuilder: (context, index) {
+        final g = guides[index];
+        return Container(
+          margin: EdgeInsets.only(bottom: 8.sp),
+          padding: EdgeInsets.all(12.sp),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.sp),
+                decoration: BoxDecoration(
+                  color: Colors.purpleAccent.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.picture_as_pdf, color: Colors.purpleAccent, size: 18.sp),
+              ),
+              SizedBox(width: 12.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      g.title,
+                      style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 2.sp),
+                    Text(
+                      "Category: ${g.category}",
+                      style: TextStyle(color: Colors.white60, fontSize: 10.sp),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnnouncementsList(NotificationProvider notifProvider) {
+    final list = notifProvider.notifications;
+    if (list.isEmpty) {
+      return _buildEmptyState("No notifications pushed yet", Icons.notifications_none, _sendNotificationForm, "+ Push Alert");
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: list.length,
+      itemBuilder: (context, index) {
+        final n = list[index];
+        return Container(
+          margin: EdgeInsets.only(bottom: 8.sp),
+          padding: EdgeInsets.all(12.sp),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: green.withOpacity(0.3)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.sp),
+                decoration: BoxDecoration(
+                  color: green.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.campaign, color: green, size: 18.sp),
+              ),
+              SizedBox(width: 12.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      n.title,
+                      style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 2.sp),
+                    Text(
+                      n.message,
+                      style: TextStyle(color: Colors.white70, fontSize: 10.sp),
+                    ),
+                    SizedBox(height: 4.sp),
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6.sp, vertical: 2.sp),
+                          decoration: BoxDecoration(
+                            color: green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            n.category,
+                            style: TextStyle(color: green, fontSize: 8.sp, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          "${n.createdAt.hour}:${n.createdAt.minute.toString().padLeft(2, '0')}",
+                          style: TextStyle(color: Colors.white38, fontSize: 8.sp),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
