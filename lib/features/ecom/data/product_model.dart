@@ -29,6 +29,16 @@ class Product {
     required this.sizes,
   });
 
+  String get categoryName {
+    if (category.containsKey('name') && category['name'] != null && category['name'].toString().trim().isNotEmpty) {
+      return category['name'].toString().trim();
+    }
+    if (category.containsKey('title') && category['title'] != null && category['title'].toString().trim().isNotEmpty) {
+      return category['title'].toString().trim();
+    }
+    return 'General';
+  }
+
   factory Product.fromJson(dynamic json) {
     if (json == null || json is! Map<String, dynamic>) {
       // Log or handle the unexpected data type

@@ -19,7 +19,10 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
   @override
   Widget build(BuildContext context) {
     final filtered = widget.products.where((p) {
-      return p.name.toLowerCase().contains(query.toLowerCase()) || p.brand.toLowerCase().contains(query.toLowerCase());
+      final q = query.toLowerCase();
+      return p.name.toLowerCase().contains(q) ||
+          p.brand.toLowerCase().contains(q) ||
+          p.categoryName.toLowerCase().contains(q);
     }).toList();
 
     return Scaffold(
@@ -58,10 +61,16 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
                   leading: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
-                      p.images.first,
+                      p.images.isNotEmpty ? p.images.first : 'https://via.placeholder.com/150',
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 50,
+                        height: 50,
+                        color: Colors.grey[800],
+                        child: const Icon(Icons.shopping_bag_outlined, color: Colors.white38, size: 24),
+                      ),
                     ),
                   ),
                   title: Text(

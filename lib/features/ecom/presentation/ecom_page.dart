@@ -118,95 +118,122 @@ class _EcomPageState extends State<EcomPage> with AutomaticKeepAliveClientMixin 
 
           final orcaProducts = products.where((p) => p.brand.toLowerCase() == 'orca').toList();
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('SHOP ORCA', style: TextStyle(color: Colors.white, fontSize: 22.sp, fontWeight: FontWeight.bold, fontFamily: 'Doto')),
+          // Group products dynamically by Category Name
+          final Map<String, List<Product>> categoryGroups = {};
+          for (final p in products) {
+            final catName = p.categoryName.toUpperCase();
+            categoryGroups.putIfAbsent(catName, () => []).add(p);
+          }
+
+          return RefreshIndicator(
+            onRefresh: refresh,
+            color: green,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('SHOP ORCA', style: TextStyle(color: Colors.white, fontSize: 22.sp, fontWeight: FontWeight.bold, fontFamily: 'Doto')),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          IconButton(
+                            icon: Image.asset('assets/icons/search-dotted.png', color: Colors.white, width: 19.sp, height: 19.sp),
+                            onPressed: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => ProductSearchPage(products: products)));
+                            },
+                          ),
+                          Consumer<CartProvider>(
+                            builder: (context, cart, child) {
+                              return Stack(
+                                alignment: Alignment.topRight,
+                                children: [
+                                  IconButton(
+                                      icon: Image.asset(
+                                        'assets/icons/cart-dotted.png',
+                                        height: 20.sp,
+                                      ),
+                                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CartPage()))),
+                                  if (cart.items.length > 0)
+                                    Positioned(
+                                      right: 12.sp,
+                                      top: 10.sp,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: green,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Text(
+                                          '${cart.items.length}',
+                                          style: KTextTheme.dottedDark.bodySmall!.copyWith(color: Colors.black, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    )
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  
+                  // ORCA EXCLUSIVE SECTION
+                  if (orcaProducts.isNotEmpty) ...[
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
+                        Text('ORCA EXCLUSIVE', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold, fontFamily: 'Doto')),
+                        const Spacer(),
                         IconButton(
-                          icon: Image.asset('assets/icons/search-dotted.png', color: Colors.white, width: 19.sp, height: 19.sp),
-                          onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => ProductSearchPage(products: products)));
-                          },
-                        ),
-                        Consumer<CartProvider>(
-                          builder: (context, cart, child) {
-                            return Stack(
-                              alignment: Alignment.topRight,
-                              children: [
-                                IconButton(
-                                    icon: Image.asset(
-                                      'assets/icons/cart-dotted.png',
-                                      height: 20.sp,
-                                    ),
-                                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CartPage()))),
-                                if (cart.items.length > 0)
-                                  Positioned(
-                                    right: 12.sp,
-                                    top: 10.sp,
-                                    child: Container(
-                                      padding: EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: green,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Text(
-                                        '${cart.items.length}',
-                                        style: KTextTheme.dottedDark.bodySmall!.copyWith(color: Colors.black, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  )
-                              ],
-                            );
-                          },
+                          icon: Image.asset(
+                            'assets/icons/chevron-dotted.png',
+                            width: 22.sp,
+                            height: 22.sp,
+                          ),
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AllProductsPage(
+                                orcaExclusive: true,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
+                    SizedBox(height: 8.sp),
+                    ...orcaProducts.map((p) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _smallProductCard(p),
+                        )),
+                    const SizedBox(height: 16),
                   ],
-                ),
-                // const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Text('ORCA EXCLUSIVE', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold, fontFamily: 'Doto')),
-                    const Spacer(),
-                    IconButton(
-                        icon: Image.asset(
-                          'assets/icons/chevron-dotted.png',
-                          width: 22.sp,
-                          height: 22.sp,
-                        ),
-                        onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => AllProductsPage(
-                                        orcaExclusive: true,
-                                      )),
+
+                  // DYNAMIC CATEGORY SECTIONS
+                  ...categoryGroups.entries.map((entry) {
+                    final catName = entry.key;
+                    final catProducts = entry.value;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _sectionTitle(catName, categoryName: catName),
+                        SizedBox(height: 4.sp),
+                        ...catProducts.map((e) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _smallProductCard(e),
                             )),
-                  ],
-                ),
-                SizedBox(height: 8.sp),
-                if (orcaProducts.isEmpty)
-                  Text("No products yet", style: TextStyle(color: Colors.white54))
-                else
-                  ...products.where((p) => p.brand.toLowerCase() == 'orca').map((p) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _smallProductCard(p),
-                      )),
-                const SizedBox(height: 20),
-                _sectionTitle("SUPPLEMENTS"),
-                SizedBox(height: 4.sp),
-                ...products.where((e) => e.category['_id']?.toString() == '67d28c34b0a6538d1cd82f2b').map((e) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _smallProductCard(e),
-                    )),
-              ],
+                        const SizedBox(height: 12),
+                      ],
+                    );
+                  }),
+                ],
+              ),
             ),
           );
         },
@@ -239,13 +266,13 @@ class _EcomPageState extends State<EcomPage> with AutomaticKeepAliveClientMixin 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           headerShimmer(),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           featuredProductShimmer(),
-          SizedBox(height: 20),
-          shimmerBox(width: 30.w, height: 20), // SUPPLEMENTS title
-          SizedBox(height: 10),
+          const SizedBox(height: 20),
+          shimmerBox(width: 30.w, height: 20),
+          const SizedBox(height: 10),
           ...List.generate(3, (_) => smallProductShimmer()),
         ],
       ),
@@ -279,24 +306,27 @@ class _EcomPageState extends State<EcomPage> with AutomaticKeepAliveClientMixin 
     );
   }
 
-  Widget _sectionTitle(String title) {
+  Widget _sectionTitle(String title, {String? categoryName, bool isExclusive = false}) {
     return Row(
       children: [
         Text(title, style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold, fontFamily: 'Doto')),
         const Spacer(),
         IconButton(
-            icon: Image.asset(
-              'assets/icons/chevron-dotted.png',
-              width: 22.sp,
-              height: 22.sp,
+          icon: Image.asset(
+            'assets/icons/chevron-dotted.png',
+            width: 22.sp,
+            height: 22.sp,
+          ),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AllProductsPage(
+                orcaExclusive: isExclusive,
+                categoryName: categoryName,
+              ),
             ),
-            onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => AllProductsPage(
-                            orcaExclusive: false,
-                          )),
-                )),
+          ),
+        ),
       ],
     );
   }
@@ -320,9 +350,15 @@ class _EcomPageState extends State<EcomPage> with AutomaticKeepAliveClientMixin 
               borderRadius: BorderRadius.circular(16),
               child: Image.network(
                 p.images.isNotEmpty ? p.images.first : 'https://via.placeholder.com/150',
-                width: 150.sp,
-                height: 130.sp,
+                width: double.infinity,
+                height: 60.sp,
                 fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  height: 60.sp,
+                  width: double.infinity,
+                  color: Colors.grey[900],
+                  child: const Icon(Icons.shopping_bag_outlined, color: Colors.white38, size: 30),
+                ),
               ),
             ),
             Container(

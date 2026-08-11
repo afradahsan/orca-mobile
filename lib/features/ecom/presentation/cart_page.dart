@@ -31,9 +31,11 @@ class _CartPageState extends State<CartPage> {
     await auth.loadAuthData();
     debugPrint("Auth Token: ${auth.token}");
 
-    token = auth.token!;
+    token = auth.token ?? '';
 
-    await Provider.of<CartProvider>(context, listen: false).fetchCart(token);
+    if (token.isNotEmpty) {
+      await Provider.of<CartProvider>(context, listen: false).fetchCart(token);
+    }
   }
 
   Widget build(BuildContext context) {
@@ -90,6 +92,12 @@ class _CartPageState extends State<CartPage> {
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 50,
+                        height: 50,
+                        color: Colors.grey[800],
+                        child: const Icon(Icons.shopping_bag_outlined, color: Colors.white38, size: 24),
+                      ),
                     ),
                   ),
                   title: Text(

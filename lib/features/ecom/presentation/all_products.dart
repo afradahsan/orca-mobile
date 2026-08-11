@@ -7,9 +7,14 @@ import 'package:sizer/sizer.dart';
 import '../data/product_model.dart';
 
 class AllProductsPage extends StatefulWidget {
-  const AllProductsPage({required this.orcaExclusive, super.key});
+  const AllProductsPage({
+    this.orcaExclusive = false,
+    this.categoryName,
+    super.key,
+  });
 
   final bool orcaExclusive;
+  final String? categoryName;
 
   @override
   State<AllProductsPage> createState() => _AllProductsPageState();
@@ -27,6 +32,13 @@ class _AllProductsPageState extends State<AllProductsPage> {
 
   @override
   Widget build(BuildContext context) {
+    String titleText = 'ALL PRODUCTS';
+    if (widget.orcaExclusive) {
+      titleText = 'ORCA EXCLUSIVE';
+    } else if (widget.categoryName != null && widget.categoryName!.isNotEmpty) {
+      titleText = widget.categoryName!.toUpperCase();
+    }
+
     return Scaffold(
       backgroundColor: darkgreen,
       appBar: AppBar(
@@ -34,9 +46,8 @@ class _AllProductsPageState extends State<AllProductsPage> {
           icon: Image.asset('assets/icons/back-chev-dotted.png', color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        // centerTitle: true,
         backgroundColor: darkgreen,
-        title: Text('ALL PRODUCTS', style: KTextTheme.dottedDark.titleLarge),
+        title: Text(titleText, style: KTextTheme.dottedDark.titleLarge),
         titleSpacing: 2.sp,
       ),
       body: FutureBuilder<List<Product>>(
@@ -46,7 +57,13 @@ class _AllProductsPageState extends State<AllProductsPage> {
             return const Center(child: CircularProgressIndicator(color: green));
           }
 
-          final products = snapshot.data!;
+          List<Product> products = snapshot.data!;
+
+          if (widget.orcaExclusive) {
+            products = products.where((p) => p.brand.toLowerCase() == 'orca').toList();
+          } else if (widget.categoryName != null && widget.categoryName!.isNotEmpty) {
+            products = products.where((p) => p.categoryName.toUpperCase() == widget.categoryName!.toUpperCase()).toList();
+          }
           return ListView.separated(
             padding: EdgeInsets.all(16.sp),
             itemCount: products.length,
@@ -72,10 +89,16 @@ class _AllProductsPageState extends State<AllProductsPage> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: Image.network(
-                          p.images[0],
+                          p.images.isNotEmpty ? p.images.first : 'https://via.placeholder.com/150',
                           width: double.infinity,
                           height: 140,
                           fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            height: 140,
+                            width: double.infinity,
+                            color: Colors.grey[900],
+                            child: const Icon(Icons.shopping_bag_outlined, color: Colors.white38, size: 40),
+                          ),
                         ),
                       ),
                       Container(

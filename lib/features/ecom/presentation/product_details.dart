@@ -107,8 +107,23 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 style: ElevatedButton.styleFrom(backgroundColor: green),
                 onPressed: () {
                   final cart = Provider.of<CartProvider>(context, listen: false);
-                  final double price = double.parse(widget.product.price.toString());
-                  cart.addToCart(token: token, productId: widget.product.id, size: selectedSize!, quantity: _quantity, price: price, color: widget.product.sizes.firstWhere((s) => s.size == selectedSize!).colors[0].color);
+                  final double price = double.tryParse(widget.product.price.toString()) ?? 0.0;
+                  final String sizeToUse = selectedSize ?? (widget.product.sizes.isNotEmpty ? widget.product.sizes.first.size : "M");
+                  
+                  String colorToUse = "Default";
+                  final matchSizes = widget.product.sizes.where((s) => s.size == sizeToUse).toList();
+                  if (matchSizes.isNotEmpty && matchSizes.first.colors.isNotEmpty) {
+                    colorToUse = matchSizes.first.colors.first.color;
+                  }
+
+                  cart.addToCart(
+                    token: token,
+                    productId: widget.product.id,
+                    size: sizeToUse,
+                    quantity: _quantity,
+                    price: price,
+                    color: colorToUse,
+                  );
 
                   // Bounce animation
                   setState(() {
@@ -116,7 +131,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     _quantity = 1;
                   });
                   Future.delayed(const Duration(milliseconds: 300), () {
-                    setState(() => added = false);
+                    if (mounted) setState(() => added = false);
                   });
 
                   // Optional: feedback
@@ -190,10 +205,16 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: Image.network(
-                    widget.product.images[0],
+                    widget.product.images.isNotEmpty ? widget.product.images.first : 'https://via.placeholder.com/300',
                     width: double.infinity,
                     height: 35.h,
                     fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 35.h,
+                      width: double.infinity,
+                      color: Colors.grey[900],
+                      child: const Icon(Icons.shopping_bag_outlined, color: Colors.white38, size: 50),
+                    ),
                   ),
                 ),
                 SizedBox(height: 16.sp),
@@ -212,7 +233,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         color: green,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text('Member Price - ₹${(double.parse(widget.product.price.toString()) - 250).toInt()}', style: TextStyle(fontSize: 14.sp, color: Colors.black)),
+                      child: Text(
+                        'Member Price - ₹${((double.tryParse(widget.product.price.toString()) ?? 0.0) > 250 ? (double.tryParse(widget.product.price.toString())! - 250).toInt() : (double.tryParse(widget.product.price.toString()) ?? 0).toInt())}',
+                        style: TextStyle(fontSize: 14.sp, color: Colors.black),
+                      ),
                     ),
                   ],
                 ),
