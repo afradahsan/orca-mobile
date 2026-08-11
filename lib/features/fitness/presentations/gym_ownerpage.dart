@@ -15,6 +15,7 @@ import 'package:orca/features/fitness/domain/exercise_model.dart';
 import 'package:orca/features/fitness/domain/guide_model.dart';
 import 'package:orca/features/fitness/domain/member_model.dart';
 import 'package:orca/features/notifications/domain/notification_provider.dart';
+import 'package:orca/features/notifications/data/push_notification_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
@@ -1048,6 +1049,13 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
                                 message: message.trim(),
                                 category: category,
                                 actionTarget: actionTarget.isNotEmpty ? actionTarget : null,
+                              );
+
+                              // Trigger Device System Tray & Lock-Screen Push Alert
+                              await PushNotificationService.instance.showLocalNotification(
+                                title: title.trim(),
+                                body: message.trim(),
+                                payload: actionTarget.isNotEmpty ? actionTarget : null,
                               );
 
                               if (mounted) {

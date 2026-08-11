@@ -10,6 +10,7 @@ import 'package:orca/features/fitness/domain/role_provider.dart';
 import 'package:orca/features/home/presentation/home_page.dart';
 import 'package:orca/firebase_options.dart';
 import 'package:orca/features/notifications/domain/notification_provider.dart';
+import 'package:orca/features/notifications/data/push_notification_service.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
@@ -19,6 +20,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize Device Push Notifications & High Importance Channel
+  await PushNotificationService.instance.initialize();
 
   final auth = AuthProvider();
   await auth.loadAuthData();
