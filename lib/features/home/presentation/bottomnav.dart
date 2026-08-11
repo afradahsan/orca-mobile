@@ -102,23 +102,6 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
             ),
           ),
           Positioned(
-            right: 14.sp,
-            top: 10.sp,
-            child: SafeArea(
-              child: NotificationBell(
-                onNotificationNavigate: (target) {
-                  if (target == 'competitions') {
-                    _tabController.animateTo(2);
-                  } else if (target == 'fitness') {
-                    _tabController.animateTo(1);
-                  } else if (target == 'ecom') {
-                    _tabController.animateTo(0);
-                  }
-                },
-              ),
-            ),
-          ),
-          Positioned(
             left: 0,
             right: 0,
             bottom: 0,

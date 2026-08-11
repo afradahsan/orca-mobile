@@ -83,16 +83,10 @@ class _CompetitionsPageState extends State<CompetitionsPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          /// TITLE ROW WITH NOTIFICATION BELL
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Competitions",
-                                style: TextStyle(color: Colors.white, fontSize: 21.sp, fontWeight: FontWeight.w700),
-                              ),
-                              const NotificationBell(),
-                            ],
+                          /// TITLE
+                          Text(
+                            "Competitions",
+                            style: TextStyle(color: Colors.white, fontSize: 21.sp, fontWeight: FontWeight.w700),
                           ),
 
                           SizedBox(height: 2.h),

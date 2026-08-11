@@ -5,6 +5,7 @@ import 'package:orca/features/auth/domain/auth_provider.dart';
 import 'package:orca/features/auth/domain/auth_repo.dart';
 import 'package:orca/features/auth/presentation/get_started.dart';
 import 'package:orca/features/home/presentation/my_orders.dart';
+import 'package:orca/features/notifications/presentation/notification_bell.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
@@ -174,6 +175,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
                   const Spacer(),
+                  const NotificationBell(),
+                  SizedBox(width: 8.sp),
                   Icon(
                     Icons.edit_outlined,
                     color: Colors.white54,

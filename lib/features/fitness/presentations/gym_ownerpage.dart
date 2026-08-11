@@ -111,36 +111,101 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
     final notifProvider = Provider.of<NotificationProvider>(context);
 
     return Scaffold(
-      backgroundColor: darkgreen,
+      backgroundColor: const Color(0xFF0E0E0E),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 8.sp),
+            padding: EdgeInsets.all(18.sp),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1️⃣ Header Bar with Title, Bell & Logout
+                // 1️⃣ HEADER matching ProfilePage style
                 _buildAdminHeader(),
-                SizedBox(height: 14.sp),
+                SizedBox(height: 20.sp),
 
-                // 2️⃣ Hero Push Announcement Card
-                _buildHeroPushCard(),
-                SizedBox(height: 16.sp),
+                // 2️⃣ FITNESS SNAPSHOT CONTAINER matching ProfilePage
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(14.sp),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF171717),
+                        Color(0xFF101010),
+                      ],
+                    ),
+                    border: Border.all(color: Colors.grey.shade800),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _metricCard(
+                              "${exercises.length}",
+                              "Exercises",
+                              Icons.fitness_center,
+                              green,
+                              0,
+                            ),
+                          ),
+                          SizedBox(width: 10.sp),
+                          Expanded(
+                            child: _metricCard(
+                              "${memberUsers.length}",
+                              "Gym Members",
+                              Icons.person,
+                              Colors.blueAccent,
+                              1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10.sp),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _metricCard(
+                              "${challenges.length}",
+                              "Challenges",
+                              Icons.emoji_events,
+                              Colors.orangeAccent,
+                              2,
+                            ),
+                          ),
+                          SizedBox(width: 10.sp),
+                          Expanded(
+                            child: _metricCard(
+                              "${notifProvider.notifications.length}",
+                              "Broadcasts",
+                              Icons.campaign,
+                              Colors.amber,
+                              4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
 
-                // 3️⃣ Metrics Overview 2x2 Grid
-                _buildMetricsGrid(notifProvider.notifications.length),
                 SizedBox(height: 18.sp),
 
-                // 4️⃣ Segmented Tab Bar Navigation
+                // 3️⃣ HERO ANNOUNCEMENT CARD matching TODAY STATUS style in ProfilePage
+                _buildHeroPushCard(),
+                SizedBox(height: 18.sp),
+
+                // 4️⃣ SEGMENTED TAB NAV
                 _buildSegmentedTabNav(),
                 SizedBox(height: 14.sp),
 
-                // 5️⃣ Active Tab Section Header (+ Add Button)
+                // 5️⃣ SECTION HEADER (+ Add Button)
                 _buildActiveTabHeader(),
                 SizedBox(height: 10.sp),
 
-                // 6️⃣ Active Content Display
+                // 6️⃣ ACTIVE CONTENT DISPLAY
                 _buildActiveTabContent(notifProvider),
                 SizedBox(height: 24.sp),
               ],
@@ -153,13 +218,17 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
 
   Widget _buildAdminHeader() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        CircleAvatar(
+          radius: 24.sp,
+          backgroundImage: const AssetImage('assets/images/gym.png'),
+        ),
+        SizedBox(width: 12.sp),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Admin Portal',
+              "Owner Portal",
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 18.sp,
@@ -167,41 +236,89 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
               ),
             ),
             Text(
-              'ORCA Fitness Control Center',
+              "Gym Owner • Control Center",
               style: TextStyle(
-                color: green,
+                color: Colors.grey[400],
                 fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
-        Row(
-          children: [
-            const NotificationBell(),
-            SizedBox(width: 8.sp),
-            GestureDetector(
-              onTap: () {
-                Provider.of<AuthProvider>(context, listen: false).logout();
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const GetStarted()),
-                  (route) => false,
-                );
-              },
-              child: Container(
-                padding: EdgeInsets.all(6.sp),
-                decoration: BoxDecoration(
-                  color: Colors.redAccent.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
-                ),
-                child: Icon(Icons.logout, color: Colors.redAccent, size: 16.sp),
-              ),
-            ),
-          ],
+        const Spacer(),
+        GestureDetector(
+          onTap: () {
+            Provider.of<AuthProvider>(context, listen: false).logout();
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const GetStarted()),
+              (route) => false,
+            );
+          },
+          child: Icon(
+            Icons.logout,
+            color: Colors.white54,
+            size: 20.sp,
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _metricCard(
+    String value,
+    String label,
+    IconData icon,
+    Color color,
+    int tabIndex,
+  ) {
+    final isSelected = _selectedTab == tabIndex;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTab = tabIndex),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          vertical: 12.sp,
+          horizontal: 10.sp,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.08) : Colors.white.withOpacity(0.03),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? color : Colors.grey.shade800,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  color: color,
+                  size: 16.sp,
+                ),
+                SizedBox(width: 7.sp),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 6.sp),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white54,
+                fontSize: 11.sp,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -210,128 +327,50 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
       width: double.infinity,
       padding: EdgeInsets.all(14.sp),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [green.withOpacity(0.25), Colors.grey[900]!],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: green.withOpacity(0.5), width: 1.5),
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade800),
       ),
       child: Row(
         children: [
-          Container(
-            padding: EdgeInsets.all(10.sp),
-            decoration: BoxDecoration(
-              color: green.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.campaign_rounded, color: green, size: 24.sp),
-          ),
-          SizedBox(width: 12.sp),
+          Icon(Icons.campaign, color: green, size: 20.sp),
+          SizedBox(width: 10.sp),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Push In-App Announcement',
-                  style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.bold),
+                  "Push In-App Announcement",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 SizedBox(height: 2.sp),
                 Text(
-                  'Broadcast competitions, workouts & news to users',
-                  style: TextStyle(color: Colors.white70, fontSize: 10.sp),
+                  "Broadcast alerts to all user devices",
+                  style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 11.sp,
+                  ),
                 ),
               ],
             ),
           ),
-          SizedBox(width: 6.sp),
-          ElevatedButton.icon(
+          ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: green,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 8.sp),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 8.sp),
             ),
             onPressed: _sendNotificationForm,
-            icon: const Icon(Icons.send_rounded, color: Colors.black, size: 14),
-            label: Text(
-              'Push',
+            child: Text(
+              "Push",
               style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 11.sp),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMetricsGrid(int notifCount) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 10.sp,
-      mainAxisSpacing: 10.sp,
-      childAspectRatio: 2.4,
-      children: [
-        _metricTile('Exercises', '${exercises.length}', Icons.fitness_center, green, 0),
-        _metricTile('Members', '${memberUsers.length}', Icons.people_alt, Colors.cyanAccent, 1),
-        _metricTile('Challenges', '${challenges.length}', Icons.emoji_events, Colors.amber, 2),
-        _metricTile('Broadcasts', '$notifCount', Icons.notifications_active, Colors.purpleAccent, 4),
-      ],
-    );
-  }
-
-  Widget _metricTile(String label, String value, IconData icon, Color color, int tabIndex) {
-    final isSelected = _selectedTab == tabIndex;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTab = tabIndex),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 8.sp),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.15) : Colors.grey[900],
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? color : Colors.white12,
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(6.sp),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 16.sp),
-            ),
-            SizedBox(width: 8.sp),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    value,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Colors.white60,
-                      fontSize: 9.sp,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -467,9 +506,9 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
       width: double.infinity,
       padding: EdgeInsets.all(24.sp),
       decoration: BoxDecoration(
-        color: Colors.grey[900]?.withOpacity(0.5),
+        color: Colors.white.withOpacity(0.025),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: Colors.grey.shade800),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -515,9 +554,9 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
           margin: EdgeInsets.only(bottom: 8.sp),
           padding: EdgeInsets.all(12.sp),
           decoration: BoxDecoration(
-            color: Colors.grey[900],
+            color: Colors.white.withOpacity(0.025),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white12),
+            border: Border.all(color: Colors.grey.shade800),
           ),
           child: Row(
             children: [
@@ -576,9 +615,9 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
           margin: EdgeInsets.only(bottom: 8.sp),
           padding: EdgeInsets.all(12.sp),
           decoration: BoxDecoration(
-            color: Colors.grey[900],
+            color: Colors.white.withOpacity(0.025),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white12),
+            border: Border.all(color: Colors.grey.shade800),
           ),
           child: Row(
             children: [
@@ -597,7 +636,7 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
                     ),
                     SizedBox(height: 2.sp),
                     Text(
-                      m.email.isNotEmpty ? m.email : (m.phone ?? 'No contact'),
+                      m.email.isNotEmpty ? m.email : 'No contact',
                       style: TextStyle(color: Colors.white60, fontSize: 10.sp),
                     ),
                   ],
@@ -636,9 +675,9 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
           margin: EdgeInsets.only(bottom: 8.sp),
           padding: EdgeInsets.all(12.sp),
           decoration: BoxDecoration(
-            color: Colors.grey[900],
+            color: Colors.white.withOpacity(0.025),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white12),
+            border: Border.all(color: Colors.grey.shade800),
           ),
           child: Row(
             children: [
@@ -689,9 +728,9 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
           margin: EdgeInsets.only(bottom: 8.sp),
           padding: EdgeInsets.all(12.sp),
           decoration: BoxDecoration(
-            color: Colors.grey[900],
+            color: Colors.white.withOpacity(0.025),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white12),
+            border: Border.all(color: Colors.grey.shade800),
           ),
           child: Row(
             children: [
