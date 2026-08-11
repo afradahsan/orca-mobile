@@ -35,7 +35,10 @@ class _FitnessGuidePageState extends State<FitnessGuidePage> {
         backgroundColor: Colors.black,
         title: Text('Fitness Guide', style: TextStyle(color: Colors.white, fontFamily: GoogleFonts.bebasNeue().fontFamily, letterSpacing: 2)),
         centerTitle: true,
-        leading: Icon(Icons.arrow_back, color: white,),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Padding(
         padding: EdgeInsets.all(16),

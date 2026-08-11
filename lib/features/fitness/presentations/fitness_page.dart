@@ -95,7 +95,13 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
       final auth = Provider.of<AuthProvider>(context, listen: false);
       await auth.loadAuthData();
 
-      final fetched = await _challengeService.getChallenges(auth.token!);
+      final String token = auth.token ?? '';
+      if (token.isEmpty) {
+        setState(() => loadingChallenges = false);
+        return;
+      }
+
+      final fetched = await _challengeService.getChallenges(token);
 
       setState(() {
         challenges = fetched;
@@ -167,7 +173,13 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
       final auth = Provider.of<AuthProvider>(context, listen: false);
       await auth.loadAuthData();
 
-      final exercisesList = await _exerciseService.fetchExercises(auth.token!);
+      final String token = auth.token ?? '';
+      if (token.isEmpty) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final exercisesList = await _exerciseService.fetchExercises(token);
       debugPrint('${exercisesList.length} exercises fetched.');
       setState(() {
         debugPrint('ex: $exercisesList');
@@ -305,7 +317,7 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
   Widget build(BuildContext context) {
     super.build(context);
     final Challenge? weeklyChallenge = challenges.isNotEmpty ? challenges.first : null;
-    final double challengeProgress = weeklyChallenge == null ? 0 : (weeklyChallenge.progress / weeklyChallenge.target).clamp(0.0, 1.0);
+    final double challengeProgress = (weeklyChallenge == null || weeklyChallenge.target == 0) ? 0.0 : (weeklyChallenge.progress / weeklyChallenge.target).clamp(0.0, 1.0);
 
     final todayFocus = _getTodayFocus();
     final todayChips = _getFocusChips(todayFocus);

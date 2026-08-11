@@ -38,9 +38,11 @@ class _MyOrdersState extends State<MyOrders> {
 
     await auth.loadAuthData();
 
-    debugPrint("token: ${auth.token}");
-    debugPrint('loading orders with token: ${auth.token}');
-    return await _orderService.fetchOrders(auth.token!);
+    final String token = auth.token ?? '';
+    debugPrint("token: $token");
+    if (token.isEmpty) return [];
+
+    return await _orderService.fetchOrders(token);
   }
 
   OrderFilter selectedFilter = OrderFilter.all;

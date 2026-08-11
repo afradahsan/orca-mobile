@@ -217,6 +217,7 @@ class _AllWorkoutsState extends State<AllWorkouts> {
                                           padding: EdgeInsets.all(8.sp),
                                           child: CircleAvatar(
                                             backgroundColor: Colors.transparent,
+                                            backgroundImage: img.isNotEmpty ? NetworkImage(img) : const AssetImage("assets/images/gym.png") as ImageProvider,
                                           ),
                                         ),
                                         sizedwten(context),
@@ -225,7 +226,7 @@ class _AllWorkoutsState extends State<AllWorkouts> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                ex['title'],
+                                                (ex['title'] ?? ex['name'] ?? 'Workout').toString(),
                                                 style: TextStyle(
                                                   color: const Color(0xFFB9F708),
                                                   fontSize: 16.sp,

@@ -13,15 +13,15 @@ class AuthGate extends StatelessWidget {
     final auth = Provider.of<AuthProvider>(context);
 
     if (!auth.isLoggedIn) {
-      return LoginPage(token: auth.token!);
+      return LoginPage(token: auth.token ?? '');
     }
 
     if (auth.role == "GymOwner") {
-      return GymOwnerPage(token: auth.token,);
+      return GymOwnerPage(token: auth.token);
     } else if (auth.role == "Admin") {
-      return LoginPage(token: auth.token!,);
+      return LoginPage(token: auth.token ?? '');
     } else {
-      return NavBarPage();
+      return const NavBarPage();
     }
   }
 }

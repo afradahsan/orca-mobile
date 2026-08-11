@@ -43,7 +43,9 @@ class _CompetitionsPageState extends State<CompetitionsPage> {
       final extractedCategories = data.expand((c) => c.category).toSet().toList();
 
       debugPrint("🔵 Competitions Loaded: ${data.length}");
-      debugPrint("🔵 Competitions Data: ${data[0].image}");
+      if (data.isNotEmpty) {
+        debugPrint("🔵 Competitions Data: ${data[0].image}");
+      }
       debugPrint("🔵 Categories: $extractedCategories");
 
       setState(() {

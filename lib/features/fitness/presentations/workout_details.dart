@@ -36,14 +36,22 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
   // ✅ fallback work time if backend doesn’t provide
   static const int defaultWorkSeconds = 30;
 
-  Map<String, dynamic> get currentExercise => widget.exercises[_currentExerciseIndex];
+  int _parseInt(dynamic val, int defaultValue) {
+    if (val == null) return defaultValue;
+    if (val is int) return val;
+    if (val is double) return val.toInt();
+    if (val is String) return int.tryParse(val) ?? defaultValue;
+    return defaultValue;
+  }
 
-  int get sets => (currentExercise['sets'] ?? 1) as int;
-  int get reps => (currentExercise['reps'] ?? 0) as int;
-  int get restTime => (currentExercise['restTime'] ?? 30) as int;
+  Map<String, dynamic> get currentExercise => widget.exercises.isNotEmpty ? widget.exercises[_currentExerciseIndex] : {};
+
+  int get sets => _parseInt(currentExercise['sets'], 1);
+  int get reps => _parseInt(currentExercise['reps'], 0);
+  int get restTime => _parseInt(currentExercise['restTime'], 30);
 
   // optional: if you later add duration in backend
-  int get workTime => (currentExercise['duration'] ?? defaultWorkSeconds) as int;
+  int get workTime => _parseInt(currentExercise['duration'], defaultWorkSeconds);
 
   @override
   void initState() {

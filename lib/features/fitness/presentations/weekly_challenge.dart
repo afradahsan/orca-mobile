@@ -51,15 +51,27 @@ class _WeeklyChallengeState extends State<WeeklyChallenge> {
   }
 
   Future<void> _fetchProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("member_token");
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("member_token") ?? prefs.getString("token");
 
-    final data = await MemberChallengeService().getProgress(challenge.id, token!);
+      if (token == null || token.isEmpty) {
+        if (mounted) setState(() => loadingProgress = false);
+        return;
+      }
 
-    setState(() {
-      progressData = data;
-      loadingProgress = false;
-    });
+      final data = await MemberChallengeService().getProgress(challenge.id, token);
+
+      if (mounted) {
+        setState(() {
+          progressData = data;
+          loadingProgress = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching challenge progress: $e");
+      if (mounted) setState(() => loadingProgress = false);
+    }
   }
 
   void _loadSuggestedPlan() {
