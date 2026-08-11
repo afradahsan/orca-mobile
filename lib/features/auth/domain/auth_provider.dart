@@ -30,7 +30,9 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.remove("token");
+    await prefs.remove("role");
+    await prefs.remove("gym_token");
 
     _token = null;
     _role = null;

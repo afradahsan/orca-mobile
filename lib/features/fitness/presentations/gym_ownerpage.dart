@@ -16,6 +16,8 @@ import 'package:orca/features/fitness/domain/guide_model.dart';
 import 'package:orca/features/fitness/domain/member_model.dart';
 import 'package:orca/features/notifications/domain/notification_provider.dart';
 import 'package:orca/features/notifications/data/push_notification_service.dart';
+import 'package:orca/features/notifications/presentation/notification_bell.dart';
+import 'package:orca/features/notifications/presentation/notification_center.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
@@ -140,16 +142,22 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
                         SizedBox(height: 10.sp),
                       ],
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        debugPrint('logg out');
-                        Provider.of<AuthProvider>(context, listen: false).logout();
-                        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => GetStarted()), (route) => false);
-                      },
-                      child: CircleAvatar(
-                        radius: 18.sp,
-                        backgroundImage: const AssetImage('assets/images/gym.png'),
-                      ),
+                    Row(
+                      children: [
+                        const NotificationBell(),
+                        SizedBox(width: 8.sp),
+                        GestureDetector(
+                          onTap: () {
+                            debugPrint('logg out');
+                            Provider.of<AuthProvider>(context, listen: false).logout();
+                            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => GetStarted()), (route) => false);
+                          },
+                          child: CircleAvatar(
+                            radius: 18.sp,
+                            backgroundImage: const AssetImage('assets/images/gym.png'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -1068,13 +1076,26 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            "Notification pushed successfully!",
+                                            "Notification pushed: '$title'",
                                             style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                                           ),
                                         ),
                                       ],
                                     ),
                                     backgroundColor: green,
+                                    duration: const Duration(seconds: 4),
+                                    action: SnackBarAction(
+                                      label: "VIEW LIVE",
+                                      textColor: Colors.black,
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const NotificationCenter(),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
                                 );
                               }
