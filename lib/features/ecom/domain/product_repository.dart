@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:orca/core/constants/api_constants.dart';
 import '../data/product_model.dart';
 
 class ProductService {
-  final String baseUrl = 'https://api.orcasportsclub.in/api/user/shop-products';
+  final String baseUrl = ApiConstants.shopProductsBase;
 
   Future<List<Product>> fetchAllProducts() async {
     final uri = Uri.parse(baseUrl);

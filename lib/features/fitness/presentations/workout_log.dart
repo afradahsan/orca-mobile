@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sizer/sizer.dart';
 import 'package:orca/core/utils/colors.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart';
+import 'package:orca/features/fitness/data/workout_log_service.dart';
+import 'package:orca/features/fitness/domain/workout_log.dart';
+import 'package:provider/provider.dart';
+import 'package:sizer/sizer.dart';
 
 class WorkoutLogPage extends StatefulWidget {
   const WorkoutLogPage({super.key});
@@ -16,8 +20,51 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
   int selectedCategory = 0;
 
   List<Map<String, dynamic>> logs = [];
+  bool isLoading = true;
 
   String selectedMood = "🙂";
+  final WorkoutLogService _workoutLogService = WorkoutLogService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLogs();
+  }
+
+  Future<void> _loadLogs() async {
+    setState(() => isLoading = true);
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      await auth.loadAuthData();
+      final token = auth.token ?? '';
+
+      if (token.isNotEmpty) {
+        final fetchedLogs = await _workoutLogService.getWorkoutLogs(token);
+        if (mounted) {
+          setState(() {
+            logs = fetchedLogs.map((l) {
+              return {
+                "id": l.id,
+                "exercise": l.exerciseName,
+                "category": l.category,
+                "weight": l.weight,
+                "sets": l.sets,
+                "reps": l.reps,
+                "mood": l.mood,
+                "date": l.date,
+              };
+            }).toList();
+            isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => isLoading = false);
+      }
+    } catch (e) {
+      debugPrint("Error loading logs in WorkoutLogPage: $e");
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
 
   void _openAddWorkoutSheet() {
     final exerciseController = TextEditingController();
@@ -30,7 +77,7 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.black,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       isScrollControlled: true,
@@ -38,7 +85,12 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
-              padding: EdgeInsets.all(16.sp),
+              padding: EdgeInsets.only(
+                left: 16.sp,
+                right: 16.sp,
+                top: 16.sp,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16.sp,
+              ),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -59,18 +111,20 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
                       items: categories.map((cat) {
                         return DropdownMenuItem(
                           value: cat,
-                          child: Text(cat, style: TextStyle(color: Colors.white)),
+                          child: Text(cat, style: const TextStyle(color: Colors.white)),
                         );
                       }).toList(),
                       onChanged: (value) {
-                        setModalState(() {
-                          selectedFormCategory = value!;
-                        });
+                        if (value != null) {
+                          setModalState(() {
+                            selectedFormCategory = value;
+                          });
+                        }
                       },
                     ),
                     SizedBox(height: 12.sp),
                     _inputField("Weight (kg)", weightController, isNumber: true),
-                    SizedBox(height: 12.sp,),
+                    SizedBox(height: 12.sp),
                     _inputField("Sets", setsController, isNumber: true),
                     SizedBox(height: 12.sp),
                     _inputField("Reps", repsController, isNumber: true),
@@ -98,7 +152,7 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
                             });
                           },
                           child: AnimatedContainer(
-                            duration: Duration(milliseconds: 200),
+                            duration: const Duration(milliseconds: 200),
                             padding: EdgeInsets.all(10.sp),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
@@ -123,42 +177,56 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        onPressed: () {
-                          final today = DateTime.now();
-
-                          final existingIndex = logs.indexWhere(
-                            (log) =>
-                                log["exercise"].toString().toLowerCase() == exerciseController.text.toLowerCase() &&
-                                log["category"] == selectedFormCategory &&
-                                log["date"].day == today.day &&
-                                log["date"].month == today.month &&
-                                log["date"].year == today.year,
-                          );
-
-                          if (existingIndex != -1) {
-                            logs[existingIndex] = {
-                              "exercise": exerciseController.text,
-                              "weight": weightController.text,
-                              "sets": setsController.text,
-                              "reps": repsController.text,
-                              "category": selectedFormCategory,
-                              "date": today,
-                              "mood": selectedMood,
-                            };
-                          } else {
-                            logs.add({
-                              "exercise": exerciseController.text,
-                              "weight": weightController.text,
-                              "sets": setsController.text,
-                              "reps": repsController.text,
-                              "category": selectedFormCategory,
-                              "date": today,
-                              "mood": selectedMood,
-                            });
+                        onPressed: () async {
+                          final exerciseName = exerciseController.text.trim();
+                          if (exerciseName.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Please enter an exercise name"),
+                                backgroundColor: Colors.orangeAccent,
+                              ),
+                            );
+                            return;
                           }
 
-                          setState(() {});
-                          Navigator.pop(context);
+                          final auth = Provider.of<AuthProvider>(context, listen: false);
+                          await auth.loadAuthData();
+                          final token = auth.token ?? '';
+
+                          final double weight = double.tryParse(weightController.text) ?? 0.0;
+                          final int sets = int.tryParse(setsController.text) ?? 0;
+                          final int reps = int.tryParse(repsController.text) ?? 0;
+
+                          final success = await _workoutLogService.createWorkoutLog(
+                            token: token,
+                            exerciseName: exerciseName,
+                            category: selectedFormCategory,
+                            weight: weight,
+                            sets: sets,
+                            reps: reps,
+                            mood: selectedMood,
+                            date: DateTime.now(),
+                          );
+
+                          if (mounted) {
+                            Navigator.pop(context);
+                            if (success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Workout log saved! 💪"),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              _loadLogs();
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Failed to save workout log to server"),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
+                          }
                         },
                         child: Text(
                           "SAVE WORKOUT",
@@ -189,7 +257,7 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
 
     final totalSets = todayLogs.fold<int>(
       0,
-      (sum, item) => sum + int.tryParse(item["sets"].toString())!,
+      (sum, item) => sum + (int.tryParse(item["sets"].toString()) ?? 0),
     );
 
     final moods = todayLogs.map((e) => e["mood"]).toList();
@@ -200,10 +268,10 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
       padding: EdgeInsets.all(14.sp),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [
-            const Color(0xFF181818),
-            const Color(0xFF101010),
+            Color(0xFF181818),
+            Color(0xFF101010),
           ],
         ),
         border: Border.all(color: Colors.grey.shade800),
@@ -214,7 +282,7 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Today", style: TextStyle(color: Colors.white70)),
+                const Text("Today", style: TextStyle(color: Colors.white70)),
                 SizedBox(height: 4.sp),
                 Text(
                   "${todayLogs.length} exercises",
@@ -229,7 +297,7 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
           ),
           Text(
             "$totalSets sets  $todayMood",
-            style: TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white),
           ),
         ],
       ),
@@ -272,7 +340,7 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
                 children: [
                   Container(
                     width: 16.sp,
-                    height: height*1.5,
+                    height: height * 1.5,
                     decoration: BoxDecoration(
                       color: green,
                       borderRadius: BorderRadius.circular(8),
@@ -304,6 +372,10 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           "WORKOUT LOG",
           style: TextStyle(
@@ -317,8 +389,8 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: green,
         onPressed: _openAddWorkoutSheet,
-        icon: Icon(Icons.fitness_center, color: Colors.black),
-        label: Text(
+        icon: const Icon(Icons.fitness_center, color: Colors.black),
+        label: const Text(
           "Add Log",
           style: TextStyle(
             color: Colors.black,
@@ -326,137 +398,141 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(14.sp),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _todaySummaryCard(),
-            SizedBox(height: 14.sp),
-            _weeklyProgressCard(),
-            SizedBox(height: 18.sp),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: List.generate(categories.length, (index) {
-                  final selected = selectedCategory == index;
-
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedCategory = index;
-                      });
-                    },
-                    child: Container(
-                      margin: EdgeInsets.only(right: 10.sp),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 14.sp,
-                        vertical: 8.sp,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        color: selected ? green.withOpacity(0.9) : Colors.white.withOpacity(0.04),
-                        border: Border.all(
-                          color: selected ? green : Colors.grey.shade800,
-                        ),
-                      ),
-                      child: Text(
-                        categories[index],
-                        style: TextStyle(
-                          color: selected ? Colors.black : Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-            SizedBox(height: 18.sp),
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 10.sp, horizontal: 10.sp),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.025),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: green))
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(14.sp),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(flex: 2, child: _header("Date")),
-                  Expanded(flex: 3, child: _header("Exercise")),
-                  Expanded(child: _header("Kg")),
-                  Expanded(child: _header("Sets")),
-                  Expanded(child: _header("Reps")),
-                  Expanded(child: _header("Feel")),
-                ],
-              ),
-            ),
-            SizedBox(height: 10.sp),
-            if (filteredLogs.isEmpty)
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 40.sp),
-                  child: Text(
-                    "No workouts logged yet",
-                    style: TextStyle(
-                      color: Colors.white38,
+                  _todaySummaryCard(),
+                  SizedBox(height: 14.sp),
+                  _weeklyProgressCard(),
+                  SizedBox(height: 18.sp),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List.generate(categories.length, (index) {
+                        final selected = selectedCategory == index;
+
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedCategory = index;
+                            });
+                          },
+                          child: Container(
+                            margin: EdgeInsets.only(right: 10.sp),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 14.sp,
+                              vertical: 8.sp,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              color: selected ? green.withOpacity(0.9) : Colors.white.withOpacity(0.04),
+                              border: Border.all(
+                                color: selected ? green : Colors.grey.shade800,
+                              ),
+                            ),
+                            child: Text(
+                              categories[index],
+                              style: TextStyle(
+                                color: selected ? Colors.black : Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
                   ),
-                ),
-              )
-            else
-              ...filteredLogs.map((log) {
-                return Container(
-                  margin: EdgeInsets.only(bottom: 6.sp),
-                  padding: EdgeInsets.symmetric(
-                    vertical: 12.sp,
-                    horizontal: 10.sp,
+                  SizedBox(height: 18.sp),
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical: 10.sp, horizontal: 10.sp),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.025),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(flex: 2, child: _header("Date")),
+                        Expanded(flex: 3, child: _header("Exercise")),
+                        Expanded(child: _header("Kg")),
+                        Expanded(child: _header("Sets")),
+                        Expanded(child: _header("Reps")),
+                        Expanded(child: _header("Feel")),
+                      ],
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.03),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          "${log["date"].day} ${_monthName(log["date"].month)}",
-                          style: TextStyle(color: Colors.white54),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          log["exercise"],
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          log["weight"],
+                  SizedBox(height: 10.sp),
+                  if (filteredLogs.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 40.sp),
+                        child: const Text(
+                          "No workouts logged yet",
                           style: TextStyle(
-                            color: green,
-                            fontWeight: FontWeight.bold,
+                            color: Colors.white38,
                           ),
                         ),
                       ),
-                      Expanded(child: Text(log["sets"], style: TextStyle(color: Colors.white))),
-                      Expanded(child: Text(log["reps"], style: TextStyle(color: Colors.white))),
-                      Expanded(child: Text(log["mood"], style: TextStyle(fontSize: 16.sp))),
-                    ],
-                  ),
-                );
-              }),
-          ],
-        ),
-      ),
+                    )
+                  else
+                    ...filteredLogs.map((log) {
+                      final DateTime d = log["date"] is DateTime ? log["date"] : DateTime.now();
+
+                      return Container(
+                        margin: EdgeInsets.only(bottom: 6.sp),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 12.sp,
+                          horizontal: 10.sp,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.03),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                "${d.day} ${_monthName(d.month)}",
+                                style: const TextStyle(color: Colors.white54),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                (log["exercise"] ?? "").toString(),
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                (log["weight"] ?? "0").toString(),
+                                style: const TextStyle(
+                                  color: green,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Text((log["sets"] ?? "0").toString(), style: const TextStyle(color: Colors.white))),
+                            Expanded(child: Text((log["reps"] ?? "0").toString(), style: const TextStyle(color: Colors.white))),
+                            Expanded(child: Text((log["mood"] ?? "🙂").toString(), style: TextStyle(fontSize: 16.sp))),
+                          ],
+                        ),
+                      );
+                    }),
+                ],
+              ),
+            ),
     );
   }
 
   Widget _header(String text) {
     return Text(
       text,
-      style: TextStyle(
+      style: const TextStyle(
         color: Colors.white54,
         fontWeight: FontWeight.bold,
       ),
@@ -476,12 +552,12 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
               FilteringTextInputFormatter.digitsOnly,
             ]
           : [],
-      style: TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white.withOpacity(0.05),
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.white38),
+        hintStyle: const TextStyle(color: Colors.white38),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -492,6 +568,6 @@ class _WorkoutLogPageState extends State<WorkoutLogPage> {
 
   String _monthName(int month) {
     const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months[month];
+    return (month >= 1 && month <= 12) ? months[month] : '';
   }
 }

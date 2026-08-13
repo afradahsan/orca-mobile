@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:orca/core/constants/api_constants.dart';
 import 'package:orca/features/ecom/data/order_model.dart';
 import 'package:http/http.dart' as http;
 
 class OrderService {
-  final String baseUrl = 'https://api.orcasportsclub.in/api/orders';
+  final String baseUrl = ApiConstants.ordersBase;
 
   Future<List<Order>> fetchOrders(String token) async {
     debugPrint('fetch called');

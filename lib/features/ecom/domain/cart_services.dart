@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:orca/core/constants/api_constants.dart';
 import '../data/cart_response.dart';
 
 class CartService {
-  final String baseUrl = "https://api.orcasportsclub.in/api/user/cart";
+  final String baseUrl = ApiConstants.cartBase;
 
   Future<CartResponse> getCart(String token) async {
     debugPrint('statement reached cart service with token: $token');

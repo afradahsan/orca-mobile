@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:orca/core/constants/api_constants.dart';
 
 class AuthServices {
-  final String baseUrl = "https://api.orcasportsclub.in/api/user";
+  final String baseUrl = ApiConstants.userBase;
 
   Future<bool> checkUserByPhone(String phone) async {
     final uri = Uri.parse('$baseUrl/login');

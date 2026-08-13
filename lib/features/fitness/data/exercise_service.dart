@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:orca/core/constants/api_constants.dart';
 import 'package:orca/features/fitness/domain/exercise_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ExerciseService {
-  final String baseUrl = "https://api.orcasportsclub.in/api/fitness/exercises";
+  final String baseUrl = ApiConstants.fitnessExercisesBase;
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();

@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:orca/core/constants/api_constants.dart';
 import 'package:orca/features/ecom/data/address_model.dart';
 import 'package:http/http.dart' as http;
 
 class AddressService {
-  final String baseUrl = "https://api.orcasportsclub.in/api/user/addresses";
+  final String baseUrl = ApiConstants.addressesBase;
 
   Future<List<Address>> fetchAddresses(String token) async {
     final res = await http.get(

@@ -158,13 +158,8 @@ class _ProgressiveSignupPageState extends State<ProgressiveSignupPage> {
         ),
         SizedBox(height: 20.sp),
         _adaptiveButton(
-            label: "Verify OTP",
-            onPressed: () {
-              //stationary for now, In real call _verifyOtp() here.
-              setState(() {
-                _step = 2;
-              });
-            }),
+            label: _isLoading ? "Verifying..." : "Verify OTP",
+            onPressed: _isLoading ? () {} : _verifyOtp),
         TextButton(
           onPressed: _sendOtp,
           child: Text("Resend OTP", style: TextStyle(color: green, fontWeight: FontWeight.bold)),

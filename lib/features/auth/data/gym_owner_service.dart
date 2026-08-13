@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:orca/core/constants/api_constants.dart';
 import 'package:orca/features/fitness/domain/exercise_model.dart';
 import 'package:orca/features/fitness/domain/member_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class GymOwnerService {
-  final String baseUrl = 'https://api.orcasportsclub.in/api/gym-owner';
-  final String fitnessUrl = 'https://api.orcasportsclub.in/api/fitness/exercises';
+  final String baseUrl = ApiConstants.gymOwnerBase;
+  final String fitnessUrl = ApiConstants.fitnessExercisesBase;
 
   Future<Map<String, dynamic>> registerGymOwner({
     required String name,
