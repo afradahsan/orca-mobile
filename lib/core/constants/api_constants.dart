@@ -6,7 +6,7 @@ class ApiConstants {
   static const bool useLocalApi = true;
 
   /// Your local port if running local server (default Node.js port)
-  static const int localPort = 5000;
+  static const int localPort = 3030;
 
   static String get domain {
     if (!useLocalApi) {

@@ -206,9 +206,9 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
       case DateTime.tuesday:
         return "Back";
       case DateTime.wednesday:
-        return "Chest";
-      case DateTime.thursday:
         return "Shoulders";
+      case DateTime.thursday:
+        return "Chest";
       case DateTime.friday:
         return "Arms";
       case DateTime.saturday:

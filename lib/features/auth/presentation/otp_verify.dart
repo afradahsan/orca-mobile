@@ -44,7 +44,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
             SizedBox(height: 15.sp),
 
             PinCodeTextField(
-              length: 6,
+              length: 8,
               appContext: context,
               keyboardType: TextInputType.number,
               animationType: AnimationType.fade,

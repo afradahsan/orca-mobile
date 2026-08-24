@@ -17,6 +17,7 @@ class ProgressiveSignupPage extends StatefulWidget {
 
 class _ProgressiveSignupPageState extends State<ProgressiveSignupPage> {
   final TextEditingController otpController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   File? _imageFile;
@@ -25,6 +26,7 @@ class _ProgressiveSignupPageState extends State<ProgressiveSignupPage> {
   bool _isOtpSent = false;
   bool _isOtpVerified = false;
   bool _isLoading = false;
+  bool _obscurePassword = true;
   final AuthServices _authService = AuthServices();
 
   Future<void> _pickImage() async {
@@ -38,7 +40,7 @@ class _ProgressiveSignupPageState extends State<ProgressiveSignupPage> {
       final response = await _authService.registerUser(
         name: "temp",
         email: "temp@example.com",
-        password: "temporary123", // stored in Redis only
+        password: passwordController.text.isNotEmpty ? passwordController.text.trim() : "temporary123", // stored in Redis only
         phone: widget.phoneNumber,
       );
 
@@ -81,7 +83,7 @@ class _ProgressiveSignupPageState extends State<ProgressiveSignupPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Registration successful!")),
         );
-        setState(() => _step = 2); // move to name step
+        setState(() => _step = 2); // move to password step
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(response['error'] ?? 'Invalid OTP')),
@@ -97,13 +99,19 @@ class _ProgressiveSignupPageState extends State<ProgressiveSignupPage> {
   }
 
   void _nextStep() {
-    if (_step == 2 && nameController.text.isEmpty) {
+    if (_step == 2 && passwordController.text.trim().length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Password must be at least 6 characters")),
+      );
+      return;
+    }
+    if (_step == 3 && nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter your name")),
       );
       return;
     }
-    if (_step == 3 && emailController.text.isEmpty) {
+    if (_step == 4 && emailController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter your email")),
       );
@@ -141,7 +149,7 @@ class _ProgressiveSignupPageState extends State<ProgressiveSignupPage> {
         TextField(
           controller: otpController,
           keyboardType: TextInputType.number,
-          maxLength: 4,
+          maxLength: 6,
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white, letterSpacing: 6),
           decoration: InputDecoration(
@@ -193,19 +201,76 @@ class _ProgressiveSignupPageState extends State<ProgressiveSignupPage> {
       case 1:
         return _buildOtpStep();
       case 2:
-        return _buildNameStep();
+        return _buildPasswordStep();
       case 3:
-        return _buildEmailStep();
+        return _buildNameStep();
       case 4:
+        return _buildEmailStep();
+      case 5:
         return _buildProfileStep();
       default:
         return _buildOtpStep();
     }
   }
 
-  Widget _buildNameStep() {
+  Widget _buildPasswordStep() {
     return Column(
       key: const ValueKey(2),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "Create a Password",
+          style: TextStyle(
+            color: white,
+            fontSize: 22.sp,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 10.sp),
+        Text(
+          "Set a password for your new account",
+          style: TextStyle(color: whitet150),
+        ),
+        SizedBox(height: 25.sp),
+        TextField(
+          controller: passwordController,
+          obscureText: _obscurePassword,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: whitet50,
+            hintText: 'Password (min 6 characters)',
+            hintStyle: TextStyle(color: whitet150),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                color: whitet150,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.sp),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        SizedBox(height: 25.sp),
+        _adaptiveButton(label: "Next", onPressed: _nextStep),
+        TextButton(
+          onPressed: () => setState(() => _step--),
+          child: Text("Back", style: TextStyle(color: whitet150)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNameStep() {
+    return Column(
+      key: const ValueKey(3),
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
@@ -246,14 +311,14 @@ class _ProgressiveSignupPageState extends State<ProgressiveSignupPage> {
     );
   }
 
-  // 🔹 STEP 3: EMAIL ENTRY
+  // 🔹 STEP 4: EMAIL ENTRY
   Widget _buildEmailStep() {
     return Column(
-      key: const ValueKey(3),
+      key: const ValueKey(4),
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          "Hi ${nameController.text.split(' ').first},",
+          "Hi ${nameController.text.isNotEmpty ? nameController.text.split(' ').first : ''},",
           style: TextStyle(
             color: white,
             fontSize: 22.sp,
@@ -291,10 +356,10 @@ class _ProgressiveSignupPageState extends State<ProgressiveSignupPage> {
     );
   }
 
-  // 🔹 STEP 4: PROFILE IMAGE
+  // 🔹 STEP 5: PROFILE IMAGE
   Widget _buildProfileStep() {
     return Column(
-      key: const ValueKey(4),
+      key: const ValueKey(5),
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
