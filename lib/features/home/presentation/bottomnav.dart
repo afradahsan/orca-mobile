@@ -4,11 +4,10 @@ import 'package:orca/core/utils/bottom_sheet.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/features/auth/domain/auth_provider.dart';
 import 'package:orca/features/competitions/presentations/competitions_page.dart';
-import 'package:orca/features/ecom/data/order_model.dart';
 import 'package:orca/features/ecom/presentation/ecom_page.dart';
 import 'package:orca/features/fitness/presentations/fitness_page.dart';
+import 'package:orca/features/home/presentation/home_page.dart';
 import 'package:orca/features/home/presentation/profile_page.dart';
-import 'package:orca/features/notifications/presentation/notification_bell.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
@@ -26,28 +25,24 @@ class NavBarPage extends StatefulWidget {
 
 class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
   late TabController _tabController;
-  final CustomDrawerController _drawerController = CustomDrawerController();
   final ValueNotifier<Widget> _drawerContentNotifier = ValueNotifier(const SizedBox());
   late ScrollController _scrollController;
   bool _isNavBarVisible = true;
 
-  final tabs = [
-    {'icon': "assets/images/shopping-bag.png", 'label': 'Merch'},
-    {'icon': "assets/images/dumbbells.png", 'label': 'EFC'},
-    {'icon': "assets/images/winner-medal.png", 'label': 'Competitions'},
-    {'icon': "assets/images/people.png", 'label': 'Profile'},
+  final List<Map<String, dynamic>> tabs = [
+    {'isMaterialIcon': true, 'icon': Icons.home_rounded, 'label': 'Home'},
+    {'isMaterialIcon': false, 'icon': "assets/images/shopping-bag.png", 'label': 'Merch'},
+    {'isMaterialIcon': false, 'icon': "assets/images/dumbbells.png", 'label': 'EFC'},
+    {'isMaterialIcon': false, 'icon': "assets/images/winner-medal.png", 'label': 'Competitions'},
+    {'isMaterialIcon': false, 'icon': "assets/images/people.png", 'label': 'Profile'},
   ];
 
   String? token = '';
 
   Future loadOrders() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-
     await auth.loadAuthData();
-
     token = auth.token;
-
-    debugPrint("Resolved token: $token");
 
     if (token == null) {
       throw Exception("No token");
@@ -88,14 +83,23 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
                 child: TabBarView(
                   controller: _tabController,
                   children: [
+                    HomePage(
+                      onTabSelected: (index) {
+                        setState(() {
+                          _tabController.index = index;
+                        });
+                      },
+                    ),
                     EcomPage(
                       token: token,
                     ),
                     FitnessPage(
                       token: token,
                     ),
-                    CompetitionsPage(drawerController: CustomDrawerController(), drawerContentNotifier: _drawerContentNotifier),
-                    ProfilePage(token: token!)
+                    CompetitionsPage(
+                        drawerController: CustomDrawerController(),
+                        drawerContentNotifier: _drawerContentNotifier),
+                    ProfilePage(token: token ?? ''),
                   ],
                 ),
               ),
@@ -124,37 +128,46 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
     return Container(
       height: 64,
       width: double.infinity,
-      color: const Color(0xFF1C1C1C), // flat dark bar
+      color: const Color(0xFF1C1C1C),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: List.generate(tabs.length, (index) {
           final isSelected = _tabController.index == index;
+          final tabData = tabs[index];
+          final isMaterialIcon = tabData['isMaterialIcon'] as bool;
 
           return GestureDetector(
             onTap: () => setState(() => _tabController.index = index),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: isSelected ? green : Colors.transparent,
-                borderRadius: BorderRadius.circular(12), // subtle only for active
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  Image.asset(
-                    tabs[index]['icon']!,
-                    width: 22,
-                    height: 22,
-                    color: isSelected ? Colors.black : Colors.white60,
-                  ),
+                  if (isMaterialIcon)
+                    Icon(
+                      tabData['icon'] as IconData,
+                      size: 22,
+                      color: isSelected ? Colors.black : Colors.white60,
+                    )
+                  else
+                    Image.asset(
+                      tabData['icon'] as String,
+                      width: 22,
+                      height: 22,
+                      color: isSelected ? Colors.black : Colors.white60,
+                    ),
                   if (isSelected) ...[
                     const SizedBox(width: 6),
                     Text(
-                      tabs[index]['label']!,
+                      tabData['label'] as String,
                       style: TextStyle(
                         color: Colors.black,
                         fontWeight: FontWeight.bold,
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                       ),
                     ),
                   ]

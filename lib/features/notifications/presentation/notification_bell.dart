@@ -35,41 +35,54 @@ class NotificationBell extends StatelessWidget {
             );
           },
           child: Container(
-            padding: EdgeInsets.all(6.sp),
+            padding: EdgeInsets.all(8.sp),
             decoration: BoxDecoration(
-              color: Colors.grey[900]?.withOpacity(0.8),
+              color: const Color(0xFF1E1E1E),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white12),
+              border: Border.all(color: Colors.white24, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                )
+              ],
             ),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
                 Icon(
-                  count > 0 ? Icons.notifications_active : Icons.notifications_outlined,
-                  color: count > 0 ? green : iconColor,
+                  count > 0 ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+                  color: count > 0 ? green : Colors.white,
                   size: iconSize.sp,
                 ),
                 if (count > 0)
                   Positioned(
-                    right: -4,
-                    top: -4,
+                    right: -3,
+                    top: -3,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.redAccent,
+                      padding: const EdgeInsets.all(3.5),
+                      decoration: BoxDecoration(
+                        color: green,
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: green.withValues(alpha: 0.6),
+                            blurRadius: 4,
+                          )
+                        ],
                       ),
                       constraints: BoxConstraints(
-                        minWidth: 16.sp,
-                        minHeight: 16.sp,
+                        minWidth: 14.sp,
+                        minHeight: 14.sp,
                       ),
                       child: Center(
                         child: Text(
                           count > 9 ? '9+' : '$count',
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 8.sp,
-                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            fontSize: 7.5.sp,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
                       ),

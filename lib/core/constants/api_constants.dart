@@ -3,7 +3,7 @@ import 'dart:io';
 class ApiConstants {
   /// 🟢 Set to [true] to target local backend (10.0.2.2 for Android Emulator, 127.0.0.1 for iOS/Web).
   /// 🔴 Set to [false] to target the live server (https://api.orcasportsclub.in).
-  static const bool useLocalApi = true;
+  static const bool useLocalApi = false;
 
   /// Your local port if running local server (default Node.js port)
   static const int localPort = 3030;
