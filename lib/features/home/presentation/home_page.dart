@@ -67,8 +67,12 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _heroBanners = List.from(_defaultBanners);
-    _startHeroTimer();
-    _fetchBackendData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _startHeroTimer();
+        _fetchBackendData();
+      }
+    });
   }
 
   void _startHeroTimer() {
@@ -175,11 +179,11 @@ class _HomePageState extends State<HomePage> {
     final bool hasNearbyContent = _backendCompetitions.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0F17), // Matte Dark Slate Background
+      backgroundColor: darkgreen, // Pure neutral deep black (#0D0D0D)
       body: RefreshIndicator(
         onRefresh: _fetchBackendData,
         color: green,
-        backgroundColor: const Color(0xFF161C26),
+        backgroundColor: surfaceDark,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
@@ -223,7 +227,8 @@ class _HomePageState extends State<HomePage> {
   /// 1. Simple Header with Extra Large 22.sp Ultra-Readable Greeting Text
   Widget _buildSimpleHeader(AuthProvider auth) {
     final greeting = _getTimeBasedGreeting();
-    const String userName = 'Afrad';
+    final String rawName = auth.userName?.trim() ?? '';
+    final String userName = rawName.isNotEmpty ? rawName.split(' ').first : 'Athlete';
 
     return Padding(
       padding: EdgeInsets.only(left: 16.sp, right: 16.sp, top: 14.sp),
@@ -332,7 +337,7 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFF334155), width: 1.2),
+          border: Border.all(color: surfaceBorder, width: 1.2),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
@@ -344,13 +349,13 @@ class _HomePageState extends State<HomePage> {
                         banner['image'] as String,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) =>
-                            Container(color: const Color(0xFF161C26)),
+                            Container(color: surfaceDark),
                       )
                     : Image.asset(
                         banner['image'] as String,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) =>
-                            Container(color: const Color(0xFF161C26)),
+                            Container(color: surfaceDark),
                       ),
               ),
               Positioned.fill(
@@ -480,16 +485,21 @@ class _HomePageState extends State<HomePage> {
               // LEFT COLUMN: Tall "TRAIN" Card (Dumbbell icon)
               Expanded(
                 flex: 1,
-                child: GestureDetector(
-                  onTap: () => widget.onTabSelected?.call(2),
-                  child: Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF161C26),
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                          color: const Color(0xFF334155), width: 1.2),
-                    ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => widget.onTabSelected?.call(2),
+                    borderRadius: BorderRadius.circular(22),
+                    splashColor: green.withOpacity(0.15),
+                    highlightColor: green.withOpacity(0.08),
+                    child: Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: surfaceDark,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                            color: surfaceBorder, width: 1.2),
+                      ),
                     padding: EdgeInsets.all(12.sp),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -577,6 +587,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
+            ),
 
               SizedBox(width: 10.sp),
 
@@ -586,55 +597,61 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   children: [
                     // Top Card: COMPETE (Medal Icon)
-                    GestureDetector(
-                      onTap: () => widget.onTabSelected?.call(3),
-                      child: Container(
-                        height: 95,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF161C26),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                              color: const Color(0xFF334155), width: 1.2),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 10.sp, vertical: 8.sp),
-                        child: Row(
-                          children: [
-                            Image.asset(
-                              'assets/images/3d_compete_medal.png',
-                              width: 30.sp,
-                              height: 30.sp,
-                              fit: BoxFit.contain,
-                            ),
-                            SizedBox(width: 8.sp),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'COMPETE',
-                                    style: TextStyle(
-                                      color: const Color(0xFFF8FAFC),
-                                      fontSize: 15.sp,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  SizedBox(height: 2.sp),
-                                  Text(
-                                    'Events & Prizes',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12.5.sp,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => widget.onTabSelected?.call(3),
+                        borderRadius: BorderRadius.circular(18),
+                        splashColor: Colors.amber.withOpacity(0.18),
+                        highlightColor: Colors.amber.withOpacity(0.08),
+                        child: Container(
+                          height: 95,
+                          decoration: BoxDecoration(
+                            color: surfaceDark,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                                color: surfaceBorder, width: 1.2),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10.sp, vertical: 8.sp),
+                          child: Row(
+                            children: [
+                              Image.asset(
+                                'assets/images/3d_medal.png',
+                                width: 30.sp,
+                                height: 30.sp,
+                                fit: BoxFit.contain,
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 8.sp),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'COMPETE',
+                                      style: TextStyle(
+                                        color: const Color(0xFFF8FAFC),
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2.sp),
+                                    Text(
+                                      'Events & Prizes',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12.5.sp,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -642,55 +659,61 @@ class _HomePageState extends State<HomePage> {
                     SizedBox(height: 10.sp),
 
                     // Bottom Card: SHOP (Shopping Cart Icon)
-                    GestureDetector(
-                      onTap: () => widget.onTabSelected?.call(1),
-                      child: Container(
-                        height: 95,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF161C26),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                              color: const Color(0xFF334155), width: 1.2),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 10.sp, vertical: 8.sp),
-                        child: Row(
-                          children: [
-                            Image.asset(
-                              'assets/images/3d_shop_cart.png',
-                              width: 30.sp,
-                              height: 30.sp,
-                              fit: BoxFit.contain,
-                            ),
-                            SizedBox(width: 8.sp),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'SHOP',
-                                    style: TextStyle(
-                                      color: const Color(0xFFF8FAFC),
-                                      fontSize: 15.sp,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  SizedBox(height: 2.sp),
-                                  Text(
-                                    'Apparel & Gear',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12.5.sp,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => widget.onTabSelected?.call(1),
+                        borderRadius: BorderRadius.circular(18),
+                        splashColor: Colors.cyan.withOpacity(0.18),
+                        highlightColor: Colors.cyan.withOpacity(0.08),
+                        child: Container(
+                          height: 95,
+                          decoration: BoxDecoration(
+                            color: surfaceDark,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                                color: surfaceBorder, width: 1.2),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10.sp, vertical: 8.sp),
+                          child: Row(
+                            children: [
+                              Image.asset(
+                                'assets/images/3d_shop_cart.png',
+                                width: 30.sp,
+                                height: 30.sp,
+                                fit: BoxFit.contain,
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 8.sp),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'SHOP',
+                                      style: TextStyle(
+                                        color: const Color(0xFFF8FAFC),
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2.sp),
+                                    Text(
+                                      'Apparel & Gear',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12.5.sp,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -732,7 +755,7 @@ class _HomePageState extends State<HomePage> {
                   padding:
                       EdgeInsets.symmetric(horizontal: 10.sp, vertical: 4.5.sp),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF161C26),
+                    color: surfaceDark,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: green.withValues(alpha: 0.5)),
                   ),
@@ -763,7 +786,7 @@ class _HomePageState extends State<HomePage> {
               height: 140,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFF334155), width: 1.2),
+                border: Border.all(color: surfaceBorder, width: 1.2),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(22),
@@ -895,7 +918,7 @@ class _HomePageState extends State<HomePage> {
                       padding: EdgeInsets.symmetric(
                           horizontal: 10.sp, vertical: 4.5.sp),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF161C26),
+                        color: surfaceDark,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: green.withValues(alpha: 0.5)),
                       ),
@@ -952,7 +975,7 @@ class _HomePageState extends State<HomePage> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     border:
-                        Border.all(color: const Color(0xFF334155), width: 1.2),
+                        Border.all(color: surfaceBorder, width: 1.2),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),

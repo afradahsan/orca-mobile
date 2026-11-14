@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/features/auth/data/auth_services.dart';
 import 'package:orca/features/auth/data/gym_owner_service.dart';
@@ -1440,40 +1441,176 @@ class _GymOwnerPageState extends State<GymOwnerPage> with SingleTickerProviderSt
   }
 
   void _addMemberForm() {
-    String email = "";
-    String phone = "";
+    final formKey = GlobalKey<FormState>();
+    final emailCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    bool isSubmitting = false;
+    String? errorMessage;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: const Text("Add Member", style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              decoration: const InputDecoration(labelText: "Email"),
-              style: const TextStyle(color: Colors.white),
-              onChanged: (v) => email = v,
+      barrierDismissible: false,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF161616),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            "Add New Member",
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: GoogleFonts.bebasNeue().fontFamily,
+              fontSize: 18.sp,
+              letterSpacing: 2,
             ),
-            TextField(
-              decoration: const InputDecoration(labelText: "Phone"),
-              style: const TextStyle(color: Colors.white),
-              onChanged: (v) => phone = v,
+          ),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Enter the member's registered email or phone number to link them to your gym.",
+                    style: TextStyle(color: Colors.white70, fontSize: 11.sp),
+                  ),
+                  SizedBox(height: 14.sp),
+                  TextFormField(
+                    controller: emailCtrl,
+                    decoration: InputDecoration(
+                      labelText: "Email Address",
+                      labelStyle: TextStyle(color: Colors.white60, fontSize: 12.sp),
+                      prefixIcon: const Icon(Icons.email_outlined, color: green, size: 20),
+                      filled: true,
+                      fillColor: Colors.black26,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: green),
+                      ),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if ((v == null || v.trim().isEmpty) && phoneCtrl.text.trim().isEmpty) {
+                        return "Please enter an email or phone";
+                      }
+                      if (v != null && v.trim().isNotEmpty && !v.contains('@')) {
+                        return "Enter a valid email address";
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 12.sp),
+                  TextFormField(
+                    controller: phoneCtrl,
+                    decoration: InputDecoration(
+                      labelText: "Phone Number",
+                      labelStyle: TextStyle(color: Colors.white60, fontSize: 12.sp),
+                      prefixIcon: const Icon(Icons.phone_outlined, color: green, size: 20),
+                      filled: true,
+                      fillColor: Colors.black26,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: green),
+                      ),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                    keyboardType: TextInputType.phone,
+                    validator: (v) {
+                      if ((v == null || v.trim().isEmpty) && emailCtrl.text.trim().isEmpty) {
+                        return "Please enter an email or phone";
+                      }
+                      return null;
+                    },
+                  ),
+                  if (errorMessage != null) ...[
+                    SizedBox(height: 10.sp),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 6.sp),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: Colors.redAccent, size: 16),
+                          SizedBox(width: 6.sp),
+                          Expanded(
+                            child: Text(
+                              errorMessage!,
+                              style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting ? null : () => Navigator.pop(dialogCtx),
+              child: const Text("Cancel", style: TextStyle(color: Colors.white54)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: green,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+
+                      setDialogState(() {
+                        isSubmitting = true;
+                        errorMessage = null;
+                      });
+
+                      final service = GymOwnerService();
+                      final result = await service.addMember(emailCtrl.text.trim(), phoneCtrl.text.trim());
+
+                      if (!mounted) return;
+
+                      if (result["success"] == true) {
+                        Navigator.pop(dialogCtx);
+                        loadData(); // REFRESH THE MEMBER LIST IMMEDIATELY!
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(result["message"] ?? "Member added successfully! 🎉"),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } else {
+                        setDialogState(() {
+                          isSubmitting = false;
+                          errorMessage = result["message"] ?? "Failed to add member";
+                        });
+                      }
+                    },
+              child: isSubmitting
+                  ? SizedBox(
+                      width: 16.sp,
+                      height: 16.sp,
+                      child: const CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                    )
+                  : const Text("Add Member", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final service = GymOwnerService();
-              final success = await service.addMember(email, phone);
-
-              if (success) Navigator.pop(context);
-            },
-            child: const Text("Add", style: TextStyle(color: Colors.green)),
-          )
-        ],
       ),
     );
   }

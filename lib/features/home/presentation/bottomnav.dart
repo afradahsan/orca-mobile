@@ -39,20 +39,13 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
 
   String? token = '';
 
-  Future loadOrders() async {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    await auth.loadAuthData();
-    token = auth.token;
-
-    if (token == null) {
-      throw Exception("No token");
-    }
-  }
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: tabs.length, vsync: this, initialIndex: widget.initialTabIndex);
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    token = auth.token ?? '';
 
     _scrollController = ScrollController();
     _scrollController.addListener(() {
@@ -76,32 +69,30 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
       body: Stack(
         children: [
           SafeArea(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 100),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 64),
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    HomePage(
-                      onTabSelected: (index) {
-                        setState(() {
-                          _tabController.index = index;
-                        });
-                      },
-                    ),
-                    EcomPage(
-                      token: token,
-                    ),
-                    FitnessPage(
-                      token: token,
-                    ),
-                    CompetitionsPage(
-                        drawerController: CustomDrawerController(),
-                        drawerContentNotifier: _drawerContentNotifier),
-                    ProfilePage(token: token ?? ''),
-                  ],
-                ),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 64),
+              child: TabBarView(
+                controller: _tabController,
+                physics: const ClampingScrollPhysics(),
+                children: [
+                  HomePage(
+                    onTabSelected: (index) {
+                      setState(() {
+                        _tabController.index = index;
+                      });
+                    },
+                  ),
+                  EcomPage(
+                    token: token,
+                  ),
+                  FitnessPage(
+                    token: token,
+                  ),
+                  CompetitionsPage(
+                      drawerController: CustomDrawerController(),
+                      drawerContentNotifier: _drawerContentNotifier),
+                  ProfilePage(token: token ?? ''),
+                ],
               ),
             ),
           ),
@@ -110,10 +101,11 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
             right: 0,
             bottom: 0,
             child: AnimatedSlide(
-              duration: const Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
               offset: _isNavBarVisible ? const Offset(0, 0) : const Offset(0, 2),
               child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 250),
                 opacity: _isNavBarVisible ? 1 : 0,
                 child: _buildNavBar(),
               ),
@@ -128,54 +120,50 @@ class _NavBarPageState extends State<NavBarPage> with TickerProviderStateMixin {
     return Container(
       height: 64,
       width: double.infinity,
-      color: const Color(0xFF1C1C1C),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(tabs.length, (index) {
-          final isSelected = _tabController.index == index;
-          final tabData = tabs[index];
-          final isMaterialIcon = tabData['isMaterialIcon'] as bool;
-
-          return GestureDetector(
-            onTap: () => setState(() => _tabController.index = index),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected ? green : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  if (isMaterialIcon)
-                    Icon(
-                      tabData['icon'] as IconData,
-                      size: 22,
-                      color: isSelected ? Colors.black : Colors.white60,
-                    )
-                  else
-                    Image.asset(
-                      tabData['icon'] as String,
-                      width: 22,
-                      height: 22,
-                      color: isSelected ? Colors.black : Colors.white60,
-                    ),
-                  if (isSelected) ...[
-                    const SizedBox(width: 6),
+      decoration: const BoxDecoration(
+        color: Color(0xFF141414),
+        border: Border(top: BorderSide(color: Color(0xFF242424), width: 1)),
+      ),
+      child: Center(
+        child: SizedBox(
+          height: 52,
+          child: TabBar(
+            controller: _tabController,
+            indicator: const UnderlineTabIndicator(
+              borderSide: BorderSide(color: green, width: 3),
+              insets: EdgeInsets.only(bottom: 52 - 3),
+            ),
+            labelColor: green,
+            unselectedLabelColor: Colors.white,
+            tabs: tabs.map((tab) {
+              return Tab(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    tab['isMaterialIcon']
+                        ? Icon(tab['icon'], size: 24)
+                        : Image.asset(
+                            tab['icon'],
+                            width: 24,
+                            height: 24,
+                            color: _tabController.index == tabs.indexOf(tab) ? green : Colors.white,
+                          ),
+                    const SizedBox(height: 2),
                     Text(
-                      tabData['label'] as String,
+                      tab['label'],
                       style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.sp,
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
                       ),
                     ),
-                  ]
-                ],
-              ),
-            ),
-          );
-        }),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
       ),
     );
   }

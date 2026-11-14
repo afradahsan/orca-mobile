@@ -46,13 +46,15 @@ class _AllWorkoutsState extends State<AllWorkouts> {
     return {
       "title": ex.name,
       "imageUrl": ex.imageUrl ?? "",
-      "difficulty": ex.difficulty ?? "Beginner",
-      "category": ex.category ?? "General",
-      "equipment": ex.equipment ?? [],
-      "targetMuscles": ex.targetMuscles ?? [],
-      "sets": ex.sets ?? 0,
-      "reps": ex.reps ?? 0,
-      "restTime": ex.restTime ?? 30,
+      "difficulty": ex.difficulty,
+      "category": ex.category,
+      "equipment": ex.equipment,
+      "targetMuscles": ex.targetMuscles,
+      "sets": ex.sets,
+      "reps": ex.reps,
+      "restTime": ex.restTime,
+      "duration": ex.duration,
+      "caloriesBurned": ex.caloriesBurned,
     };
   }
 
@@ -108,6 +110,19 @@ class _AllWorkoutsState extends State<AllWorkouts> {
   Widget build(BuildContext context) {
     final isCustomList = widget.exercises != null && widget.exercises!.isNotEmpty;
     final bool hasCustomExercises = widget.exercises != null && widget.exercises!.isNotEmpty;
+
+    final List<Map<String, dynamic>> displayedCustomList = hasCustomExercises
+        ? widget.exercises!.where((ex) {
+            if (_searchQuery.trim().isEmpty) return true;
+            final q = _searchQuery.toLowerCase();
+            final title = (ex['title'] ?? ex['name'] ?? '').toString().toLowerCase();
+            final category = (ex['category'] ?? '').toString().toLowerCase();
+            final muscles = (ex['targetMuscles'] is List)
+                ? (ex['targetMuscles'] as List).join(' ').toLowerCase()
+                : '';
+            return title.contains(q) || category.contains(q) || muscles.contains(q);
+          }).toList()
+        : [];
 
     return Scaffold(
       backgroundColor: darkgreen,
@@ -183,27 +198,41 @@ class _AllWorkoutsState extends State<AllWorkouts> {
                           ),
                         )
                       : hasCustomExercises
-                          ? ListView.separated(
-                              itemCount: widget.exercises!.length,
-                              separatorBuilder: (context, index) {
-                                return sizedfive(context);
-                              },
-                              itemBuilder: (context, index) {
-                                final ex = widget.exercises![index];
-                                final img = (ex['imageUrl'] ?? "").toString();
-
-                                return GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) {
-                                          return WorkoutDetailsPage(
-                                            exercises: widget.exercises!,
-                                          );
-                                        },
-                                      ),
-                                    );
+                          ? (displayedCustomList.isEmpty
+                              ? const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(24.0),
+                                    child: Text(
+                                      "No matching workouts found",
+                                      style: TextStyle(color: Colors.white70),
+                                    ),
+                                  ),
+                                )
+                              : ListView.separated(
+                                  itemCount: displayedCustomList.length,
+                                  separatorBuilder: (context, index) {
+                                    return sizedfive(context);
                                   },
+                                  itemBuilder: (context, index) {
+                                    final ex = displayedCustomList[index];
+                                    final img = (ex['imageUrl'] ?? "").toString();
+
+                                    return GestureDetector(
+                                      onTap: () async {
+                                        final result = await Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return WorkoutDetailsPage(
+                                                exercises: displayedCustomList,
+                                                initialIndex: index,
+                                              );
+                                            },
+                                          ),
+                                        );
+                                        if (result == true && mounted) {
+                                          _fetchExercises();
+                                        }
+                                      },
                                   child: Container(
                                     margin: EdgeInsets.symmetric(horizontal: 17.sp, vertical: 6.sp),
                                     padding: EdgeInsets.symmetric(horizontal: 15.sp, vertical: 12.sp),
@@ -257,7 +286,7 @@ class _AllWorkoutsState extends State<AllWorkouts> {
                                   ),
                                 );
                               },
-                            )
+                            ))
                           : _filteredExercises.isEmpty
                               ? const Center(
                                   child: Text(

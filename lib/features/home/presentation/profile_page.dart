@@ -20,19 +20,20 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   Future<void> _logout() async {
-    final confirm = await showDialog(
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to log out?'),
+        backgroundColor: const Color(0xFF161616),
+        title: const Text('Sign Out', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: const Text('Are you sure you want to log out of OS CLUB?', style: TextStyle(color: Colors.white70)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Logout'),
+            child: const Text('Logout', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -42,9 +43,15 @@ class _ProfilePageState extends State<ProfilePage> {
       final authRepo = AuthRepo(authServices: AuthServices());
       await authRepo.signOut();
 
+      if (mounted) {
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+        await auth.logout();
+      }
+
+      if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => GetStarted(),
+          builder: (_) => const GetStarted(),
         ),
         (route) => false,
       );
@@ -63,9 +70,9 @@ class _ProfilePageState extends State<ProfilePage> {
         horizontal: 10.sp,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.03),
+        color: surfaceDark,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade800),
+        border: Border.all(color: surfaceBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +99,7 @@ class _ProfilePageState extends State<ProfilePage> {
           Text(
             label,
             style: TextStyle(
-              color: Colors.white54,
+              color: Colors.white60,
               fontSize: 11.sp,
             ),
           ),
@@ -107,28 +114,34 @@ class _ProfilePageState extends State<ProfilePage> {
     Color color,
     VoidCallback onTap,
   ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade800),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 28),
-            SizedBox(height: 8.sp),
-            Text(
-              title,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        splashColor: color.withOpacity(0.12),
+        highlightColor: color.withOpacity(0.06),
+        child: Container(
+          decoration: BoxDecoration(
+            color: surfaceDark,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: surfaceBorder),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 28),
+              SizedBox(height: 8.sp),
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -136,12 +149,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('token: ${widget.token}');
-    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final auth = Provider.of<AuthProvider>(context);
+    final String displayName = (auth.userName != null && auth.userName!.trim().isNotEmpty)
+        ? auth.userName!.trim()
+        : "Athlete";
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0E0E0E),
+      backgroundColor: darkBackground,
       body: SafeArea(
         child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           padding: EdgeInsets.all(18.sp),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,6 +168,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   CircleAvatar(
                     radius: 24.sp,
+                    backgroundColor: surfaceBorder,
                     backgroundImage: const AssetImage('assets/images/gym.png'),
                   ),
                   SizedBox(width: 12.sp),
@@ -158,7 +176,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Afrad",
+                        displayName,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18.sp,
@@ -166,22 +184,17 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       Text(
-                        "Gym Member • Since 2024",
+                        "OS Club Member",
                         style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 12.sp,
+                          color: green,
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
                   const Spacer(),
                   const NotificationBell(),
-                  SizedBox(width: 8.sp),
-                  Icon(
-                    Icons.edit_outlined,
-                    color: Colors.white54,
-                    size: 20.sp,
-                  ),
                 ],
               ),
 
@@ -193,13 +206,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 padding: EdgeInsets.all(14.sp),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF171717),
-                      const Color(0xFF101010),
-                    ],
-                  ),
-                  border: Border.all(color: Colors.grey.shade800),
+                  color: const Color(0xFF10151E),
+                  border: Border.all(color: surfaceBorder),
                 ),
                 child: Column(
                   children: [
@@ -209,7 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: _metricCard(
                             "72 kg",
                             "Current Weight",
-                            Icons.person,
+                            Icons.person_outline,
                             green,
                           ),
                         ),
@@ -217,7 +225,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         Expanded(
                           child: _metricCard(
                             "22.1",
-                            "BMI",
+                            "BMI Index",
                             Icons.auto_graph,
                             Colors.blueAccent,
                           ),
@@ -231,16 +239,16 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: _metricCard(
                             "14 Days",
                             "Workout Streak",
-                            Icons.fitness_center,
+                            Icons.local_fire_department,
                             Colors.orangeAccent,
                           ),
                         ),
                         SizedBox(width: 10.sp),
                         Expanded(
                           child: _metricCard(
-                            "Gold",
+                            "Pro Tier",
                             "Membership",
-                            Icons.card_membership,
+                            Icons.verified,
                             Colors.amber,
                           ),
                         ),
@@ -257,46 +265,22 @@ class _ProfilePageState extends State<ProfilePage> {
                 width: double.infinity,
                 padding: EdgeInsets.all(14.sp),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.03),
+                  color: surfaceDark,
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: surfaceBorder),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.local_fire_department, color: green),
+                    const Icon(Icons.local_fire_department_rounded, color: green, size: 24),
                     SizedBox(width: 10.sp),
                     Expanded(
                       child: Text(
-                        "You logged 3 workouts today 🔥",
+                        "You crushed your workouts today 🔥",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 13.sp,
+                          fontWeight: FontWeight.w500,
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 18.sp),
-
-              /// GYM IDENTITY
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(14.sp),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.025),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.grey.shade800),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.fitness_center, color: green),
-                    SizedBox(width: 10.sp),
-                    Text(
-                      "Member at Trounce Pulstion",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13.sp,
                       ),
                     ),
                   ],
@@ -310,7 +294,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 "Quick Actions",
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 15.sp,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -332,19 +316,19 @@ class _ProfilePageState extends State<ProfilePage> {
                     () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => MyOrders(),
+                          builder: (_) => const MyOrders(),
                         ),
                       );
                     },
                   ),
                   _buildActionCard(
-                    Icons.card_membership,
+                    Icons.card_membership_rounded,
                     "Subscriptions",
                     Colors.blueAccent,
                     () {},
                   ),
                   _buildActionCard(
-                    Icons.favorite_outline,
+                    Icons.favorite_outline_rounded,
                     "Saved Workouts",
                     Colors.pinkAccent,
                     () {},
@@ -358,63 +342,40 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
 
-              SizedBox(height: 24.sp),
-
-              /// PROFILE COMPLETION
-              Text(
-                "Profile Completion",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 13.sp,
-                ),
-              ),
-
-              SizedBox(height: 8.sp),
-
-              LinearProgressIndicator(
-                value: 0.75,
-                backgroundColor: Colors.white12,
-                color: green,
-                borderRadius: BorderRadius.circular(10),
-              ),
-
-              SizedBox(height: 6.sp),
-
-              Text(
-                "75% complete",
-                style: TextStyle(
-                  color: Colors.white54,
-                  fontSize: 11.sp,
-                ),
-              ),
-
               SizedBox(height: 28.sp),
 
               /// LOGOUT
-              GestureDetector(
-                onTap: _logout,
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(
-                    vertical: 14.sp,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.logout, color: Colors.redAccent),
-                      SizedBox(width: 8.sp),
-                      Text(
-                        "Logout",
-                        style: TextStyle(
-                          color: Colors.redAccent,
-                          fontWeight: FontWeight.bold,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _logout,
+                  borderRadius: BorderRadius.circular(14),
+                  splashColor: Colors.red.withOpacity(0.18),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(
+                      vertical: 14.sp,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.red.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.logout_rounded, color: Colors.redAccent),
+                        SizedBox(width: 8.sp),
+                        const Text(
+                          "Logout",
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

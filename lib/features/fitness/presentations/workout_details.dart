@@ -2,7 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:orca/core/utils/colors.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart';
 import 'package:orca/features/fitness/data/member_challenge_service.dart';
+import 'package:orca/features/fitness/data/workout_log_service.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 
@@ -10,10 +13,12 @@ enum TimerPhase { work, rest }
 
 class WorkoutDetailsPage extends StatefulWidget {
   final List<Map<String, dynamic>> exercises;
+  final int initialIndex;
 
   const WorkoutDetailsPage({
     super.key,
     required this.exercises,
+    this.initialIndex = 0,
   });
 
   @override
@@ -56,6 +61,9 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialIndex >= 0 && widget.initialIndex < widget.exercises.length) {
+      _currentExerciseIndex = widget.initialIndex;
+    }
     _resetForNewExercise();
   }
 
@@ -219,33 +227,155 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
     });
   }
 
-  Future<void> _logWorkoutToChallenge() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("member_token");
-    final challengeId = prefs.getString("active_challenge_id");
-
-    if (token == null || challengeId == null) return;
-
-    try {
-      final updated = await MemberChallengeService().logWorkout(challengeId, token);
-
-      if (!mounted) return;
-
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          backgroundColor: Colors.black,
-          content: Text(
-            "+${updated.auraEarnedToday} Aura✨",
-            style: const TextStyle(color: Colors.greenAccent, fontSize: 18),
-            textAlign: TextAlign.center,
+  Widget _completionStat(String label, String value) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            color: green,
+            fontWeight: FontWeight.bold,
+            fontSize: 14.sp,
+            fontFamily: GoogleFonts.bebasNeue().fontFamily,
           ),
         ),
-      );
+        SizedBox(height: 2.sp),
+        Text(
+          label,
+          style: TextStyle(color: Colors.white60, fontSize: 10.sp),
+        ),
+      ],
+    );
+  }
 
-      await Future.delayed(const Duration(seconds: 1));
-      if (mounted) Navigator.pop(context);
-    } catch (_) {}
+  Future<void> _completeWorkout() async {
+    _timer?.cancel();
+    setState(() {
+      _isPlaying = false;
+      _isCompleted = true;
+    });
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final prefs = await SharedPreferences.getInstance();
+    final token = auth.token ?? prefs.getString("token") ?? prefs.getString("member_token") ?? '';
+
+    // Log workout to server
+    if (token.isNotEmpty) {
+      final name = (currentExercise['title'] ?? currentExercise['name'] ?? 'Workout').toString();
+      final cat = (currentExercise['category'] ?? 'General').toString();
+      final setsDone = sets;
+      final repsDone = reps;
+
+      try {
+        await WorkoutLogService().createWorkoutLog(
+          token: token,
+          exerciseName: name,
+          category: cat,
+          weight: 0.0,
+          sets: setsDone,
+          reps: repsDone,
+          mood: "🔥",
+          date: DateTime.now(),
+        );
+      } catch (e) {
+        debugPrint("Error logging workout: $e");
+      }
+    }
+
+    // Also attempt challenge log if active_challenge_id is set
+    final challengeId = prefs.getString("active_challenge_id");
+    if (token.isNotEmpty && challengeId != null) {
+      try {
+        await MemberChallengeService().logWorkout(challengeId, token);
+      } catch (_) {}
+    }
+
+    if (!mounted) return;
+
+    // Show celebratory completion dialog
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: const Color(0xFF161616),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: EdgeInsets.all(18.sp),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: EdgeInsets.all(14.sp),
+                decoration: BoxDecoration(
+                  color: green.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.emoji_events_rounded, color: green, size: 36.sp),
+              ),
+              SizedBox(height: 12.sp),
+              Text(
+                "WORKOUT COMPLETED! 💪",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: GoogleFonts.bebasNeue().fontFamily,
+                  letterSpacing: 2,
+                ),
+              ),
+              SizedBox(height: 6.sp),
+              Text(
+                "Great job crushing your session!",
+                style: TextStyle(color: Colors.white70, fontSize: 12.sp),
+              ),
+              SizedBox(height: 16.sp),
+              Container(
+                padding: EdgeInsets.all(12.sp),
+                decoration: BoxDecoration(
+                  color: Colors.black38,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _completionStat("Sets", "$sets"),
+                    _completionStat("Reps", "$reps"),
+                    _completionStat("Status", "Saved ✅"),
+                  ],
+                ),
+              ),
+              SizedBox(height: 18.sp),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: green,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: EdgeInsets.symmetric(vertical: 12.sp),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(dialogContext); // close dialog
+                    Navigator.pop(context, true); // return to caller with success flag
+                  },
+                  child: Text(
+                    "DONE",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                      fontFamily: GoogleFonts.bebasNeue().fontFamily,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -256,8 +386,9 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isLastExercise = _currentExerciseIndex == widget.exercises.length - 1;
-    final bool showFinishButton = isLastExercise && _currentSet == sets && _phase == TimerPhase.rest;
+    final isLastExercise = _currentExerciseIndex >= widget.exercises.length - 1;
+    final bool showFinishButton = isLastExercise && (_currentSet >= sets || _isCompleted);
+    final bool showNextExerciseButton = !isLastExercise && (_currentSet >= sets && _phase == TimerPhase.rest);
 
     final String title = (currentExercise['title'] ?? "Workout").toString();
     final String imageUrl = (currentExercise['imageUrl'] ?? "").toString();
@@ -467,6 +598,36 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
 
             SizedBox(height: 10.sp),
 
+            // Next Exercise button (when not on the last exercise)
+            if (showNextExerciseButton)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: green,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: EdgeInsets.symmetric(vertical: 14.sp),
+                  ),
+                  onPressed: () {
+                    _timer?.cancel();
+                    setState(() {
+                      _currentExerciseIndex++;
+                    });
+                    _resetForNewExercise();
+                  },
+                  child: Text(
+                    "NEXT EXERCISE →",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                      fontFamily: GoogleFonts.bebasNeue().fontFamily,
+                    ),
+                  ),
+                ),
+              ),
+
             // Finish button
             if (showFinishButton)
               SizedBox(
@@ -477,17 +638,14 @@ class _WorkoutDetailsPageState extends State<WorkoutDetailsPage> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     padding: EdgeInsets.symmetric(vertical: 14.sp),
                   ),
-                  onPressed: () async {
-                    await _logWorkoutToChallenge();
-                    if (mounted) Navigator.pop(context);
-                  },
+                  onPressed: _completeWorkout,
                   child: Text(
-                    "FINISH",
+                    "COMPLETE WORKOUT 💪",
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 4,
+                      letterSpacing: 2,
                       fontFamily: GoogleFonts.bebasNeue().fontFamily,
                     ),
                   ),

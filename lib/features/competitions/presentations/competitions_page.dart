@@ -6,7 +6,6 @@ import 'package:orca/features/competitions/presentations/all_competitions.dart';
 import 'package:orca/features/competitions/presentations/competition_details.dart';
 import 'package:sizer/sizer.dart';
 import 'package:orca/core/utils/colors.dart';
-import 'package:orca/features/notifications/presentation/notification_bell.dart';
 
 class CompetitionsPage extends StatefulWidget {
   final CustomDrawerController drawerController;
@@ -197,21 +196,25 @@ class _CompetitionsPageState extends State<CompetitionsPage> {
                           filteredCompetitions.isNotEmpty
                               ? Column(
                                   children: filteredCompetitions.map((comp) {
-                                    return GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(builder: (_) => CompetitionDetailsPage(competition: comp,)),
-                                        );
-                                      },
-                                      child: Padding(
-                                        padding: EdgeInsets.only(bottom: 2.5.h),
-                                        child: _buildCompetitionCard(
-                                          title: comp.name,
-                                          imagePath: comp.image.first,
-                                          location: comp.place,
-                                          time: comp.time,
-                                          date: comp.date,
+                                    return Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(18),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (_) => CompetitionDetailsPage(competition: comp,)),
+                                          );
+                                        },
+                                        child: Padding(
+                                          padding: EdgeInsets.only(bottom: 2.5.h),
+                                          child: _buildCompetitionCard(
+                                            title: comp.name,
+                                            imagePath: comp.image.first,
+                                            location: comp.place,
+                                            time: comp.time,
+                                            date: comp.date,
+                                          ),
                                         ),
                                       ),
                                     );
@@ -228,11 +231,28 @@ class _CompetitionsPageState extends State<CompetitionsPage> {
 
   Widget _noCompetitionsMessage() {
     return Container(
-      height: 17.h,
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 3.h, horizontal: 4.w),
+      decoration: BoxDecoration(
+        color: surfaceDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: surfaceBorder),
+      ),
       alignment: Alignment.center,
-      child: Text(
-        "No competitions at the moment 💤",
-        style: TextStyle(color: Colors.white, fontSize: 13.sp),
+      child: Column(
+        children: [
+          Icon(Icons.emoji_events_outlined, color: Colors.white38, size: 36.sp),
+          SizedBox(height: 1.h),
+          Text(
+            "No competitions in this category yet",
+            style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.w600),
+          ),
+          SizedBox(height: 0.5.h),
+          Text(
+            "Check back soon or select another category above",
+            style: TextStyle(color: Colors.white54, fontSize: 11.sp),
+          ),
+        ],
       ),
     );
   }

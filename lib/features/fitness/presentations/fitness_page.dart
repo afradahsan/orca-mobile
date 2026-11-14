@@ -9,6 +9,7 @@ import 'package:orca/features/fitness/domain/challenge_model.dart';
 import 'package:orca/features/fitness/domain/exercise_model.dart';
 import 'package:orca/features/fitness/domain/guide_model.dart';
 import 'package:orca/features/fitness/presentations/all_workouts.dart';
+import 'package:orca/features/fitness/presentations/fitness_guide.dart';
 import 'package:orca/features/fitness/presentations/weekly_challenge.dart';
 import 'package:orca/features/fitness/presentations/wokout_history.dart';
 import 'package:orca/features/fitness/presentations/workout_details.dart';
@@ -59,8 +60,6 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
     duration: "10 Min",
     pdfUrl: "https://example.com/guide.pdf",
   );
-
-  late Challenge weeklyChallenge;
 
   @override
   bool get wantKeepAlive => true;
@@ -202,54 +201,39 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
   String _getTodayFocus() {
     switch (DateTime.now().weekday) {
       case DateTime.monday:
-        return "Legs";
+        return "Chest";
       case DateTime.tuesday:
         return "Back";
       case DateTime.wednesday:
-        return "Shoulders";
+        return "Legs";
       case DateTime.thursday:
-        return "Chest";
+        return "Shoulders";
       case DateTime.friday:
         return "Arms";
       case DateTime.saturday:
-        return "Chest";
+        return "Core";
       case DateTime.sunday:
       default:
         return "Full Body";
     }
   }
 
-  List<Exercise> getTodayRoutine() {
-    final day = DateTime.now().weekday;
-
-    String focus = "legs";
-
-    if (day == 1) focus = "chest";
-    if (day == 2) focus = "back";
-    if (day == 3) focus = "legs";
-    if (day == 4) focus = "shoulders";
-    if (day == 5) focus = "arms";
-    if (day == 6) focus = "full";
-    if (day == 7) focus = "core";
-
-    final filtered = _filterByFocus(focus);
-
-    // ✅ return 1–5 exercises
-    return filtered.take(5).toList();
-  }
-
   List<Map<String, dynamic>> toWorkoutDetailsList(List<Exercise> list) {
     return list.map((ex) {
       return {
         "title": ex.name,
+        "name": ex.name,
+        "description": ex.description ?? "Follow proper form and control breathing throughout the movement.",
         "imageUrl": ex.imageUrl ?? "",
-        "difficulty": ex.difficulty ?? "Beginner",
-        "category": ex.category ?? "General",
-        "equipment": ex.equipment ?? [],
-        "targetMuscles": ex.targetMuscles ?? [],
-        "sets": ex.sets ?? 0,
-        "reps": ex.reps ?? 0,
-        "restTime": ex.restTime ?? 30,
+        "difficulty": ex.difficulty,
+        "category": ex.category,
+        "equipment": ex.equipment,
+        "targetMuscles": ex.targetMuscles,
+        "sets": ex.sets,
+        "reps": ex.reps,
+        "restTime": ex.restTime,
+        "duration": ex.duration,
+        "caloriesBurned": ex.caloriesBurned ?? 0,
       };
     }).toList();
   }
@@ -276,63 +260,91 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
   String _getFocusSubtitle(String focus) {
     switch (focus) {
       case "Chest":
-        return "Push power & strength";
+        return "Push power & upper strength";
       case "Back":
         return "Pull strength & posture";
       case "Legs":
         return "Power • stability • stamina";
       case "Shoulders":
-        return "Shape • control • strength";
+        return "Shape • control • overhead power";
       case "Arms":
         return "Pump • definition • volume";
       case "Core":
-        return "Balance • control • endurance";
+        return "Balance • trunk control • endurance";
       default:
-        return "Move better • feel stronger";
+        return "Move better • full body vitality";
     }
   }
 
   List<Exercise> _filterByFocus(String focus) {
     final f = focus.toLowerCase();
+    final chips = _getFocusChips(focus).map((c) => c.toLowerCase()).toList();
 
-    return allExercises.where((ex) {
+    final matches = allExercises.where((ex) {
       final name = ex.name.toLowerCase();
+      final category = ex.category.toLowerCase();
 
-      // Try matching by name first (works even without backend tags)
-      if (name.contains(f)) return true;
+      // 1. Direct targetMuscles check (most accurate)
+      if (ex.targetMuscles.any((m) {
+        final lowerM = m.toLowerCase();
+        return lowerM.contains(f) || chips.any((c) => lowerM.contains(c));
+      })) {
+        return true;
+      }
 
-      // If you later add muscleGroup or category
-      final category = (ex.category ?? "").toLowerCase();
-      if (category.contains(f)) return true;
+      // 2. Direct name match
+      if (name.contains(f) || chips.any((c) => name.contains(c))) {
+        return true;
+      }
 
-      // equipment match fallback
-      final eq = (ex.equipment?.join(",") ?? "").toLowerCase();
-      if (eq.contains(f)) return true;
+      // 3. Category match
+      if (category.contains(f) || chips.any((c) => category.contains(c))) {
+        return true;
+      }
+
+      // 4. Equipment match fallback
+      if (ex.equipment.any((eq) => eq.toLowerCase().contains(f))) {
+        return true;
+      }
 
       return false;
     }).toList();
+
+    // Fallback: if backend hasn't tagged specific exercises with this focus, return first 5 exercises so user always has workouts to do
+    if (matches.isEmpty && allExercises.isNotEmpty) {
+      return allExercises.take(5).toList();
+    }
+
+    return matches;
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     final Challenge? weeklyChallenge = challenges.isNotEmpty ? challenges.first : null;
-    final double challengeProgress = (weeklyChallenge == null || weeklyChallenge.target == 0) ? 0.0 : (weeklyChallenge.progress / weeklyChallenge.target).clamp(0.0, 1.0);
+    final double challengeProgress = (weeklyChallenge == null || weeklyChallenge.target == 0)
+        ? 0.0
+        : (weeklyChallenge.progress / weeklyChallenge.target).clamp(0.0, 1.0);
 
     final todayFocus = _getTodayFocus();
     final todayChips = _getFocusChips(todayFocus);
     final todayExercises = _filterByFocus(todayFocus);
 
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final String rawName = auth.userName?.trim() ?? '';
+    final String athleteName = rawName.isNotEmpty ? rawName.split(' ').first : 'Athlete';
+
     debugPrint("Today's focus: $todayFocus with ${todayExercises.length} exercises");
 
     return Scaffold(
+      backgroundColor: darkgreen,
       floatingActionButton: FloatingActionButton(
         backgroundColor: green,
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => WorkoutLogPage(),
+              builder: (_) => const WorkoutLogPage(),
             ),
           );
         },
@@ -356,24 +368,45 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         sizedfive(context),
-                        Text('Hey Afrad!', style: TextStyle(color: white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
-                        Text('Ready to Grind?', style: TextStyle(color: green, fontSize: 18.sp, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
+                        Text('Hey $athleteName!',
+                            style: TextStyle(color: white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
+                        Text('Ready to Grind?',
+                            style: TextStyle(
+                                color: green,
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.bold,
+                                fontStyle: FontStyle.italic)),
                         sizedten(context),
                       ],
                     ),
-                    IconButton(
-                      icon: Icon(isSearching ? Icons.close : Icons.search_rounded),
-                      onPressed: () {
-                        setState(() {
-                          isSearching = !isSearching;
-                          debugPrint("🔍 isSearching = $isSearching");
-
-                          if (!isSearching) {
-                            exercises = allExercises;
-                          }
-                        });
-                      },
-                    )
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: "Workout History",
+                          icon: Icon(Icons.history_rounded, color: Colors.white70, size: 20.sp),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const WorkoutHistoryPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(isSearching ? Icons.close : Icons.search_rounded,
+                              color: Colors.white, size: 20.sp),
+                          onPressed: () {
+                            setState(() {
+                              isSearching = !isSearching;
+                              if (!isSearching) {
+                                exercises = allExercises;
+                              }
+                            });
+                          },
+                        ),
+                      ],
+                    ),
                   ],
                 ),
                 if (isSearching)
@@ -381,64 +414,37 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
                     padding: EdgeInsets.only(bottom: 12.sp),
                     child: TextField(
                       autofocus: true,
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                       onChanged: _filterExercises,
                       decoration: InputDecoration(
                         hintText: "Search workouts...",
-                        hintStyle: TextStyle(color: Colors.white54),
-                        prefixIcon: Icon(Icons.search, color: Colors.white54),
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        prefixIcon: const Icon(Icons.search, color: Colors.white54),
                         filled: true,
-                        fillColor: Colors.grey[900],
+                        fillColor: surfaceDark,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
+                          borderSide: const BorderSide(color: surfaceBorder),
                         ),
                       ),
                     ),
                   ),
                 sizedten(context),
                 dailyTracker(),
-                sizedtwenty(context),
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(14.sp),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: LinearGradient(
-                      colors: [
-                        Color(0xFF181818),
-                        Color(0xFF101010),
-                      ],
-                    ),
-                    border: Border.all(color: Colors.grey.shade800),
+
+                // Weekly Challenge Section
+                if (loadingChallenges)
+                  Padding(
+                    padding: EdgeInsets.only(top: 14.sp),
+                    child: challengeShimmer(),
+                  )
+                else if (weeklyChallenge != null)
+                  Padding(
+                    padding: EdgeInsets.only(top: 14.sp),
+                    child: _buildWeeklyChallengeCard(weeklyChallenge, challengeProgress),
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "This Week",
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                            SizedBox(height: 4.sp),
-                            Text(
-                              "+12%",
-                              style: TextStyle(
-                                color: green,
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(Icons.trending_up, color: green, size: 22.sp),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 12.sp),
+
+                SizedBox(height: 14.sp),
                 Text(
                   "Today's Focus",
                   style: TextStyle(
@@ -453,18 +459,18 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
                   padding: EdgeInsets.all(14.sp),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(18),
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        const Color(0xFF1A1A1A),
-                        const Color(0xFF0E0E0E),
+                        surfaceDark,
+                        Color(0xFF0E0E0E),
                       ],
                     ),
-                    border: Border.all(color: Colors.grey.shade800, width: 1),
+                    border: Border.all(color: surfaceBorder, width: 1.2),
                     boxShadow: [
                       BoxShadow(
-                        color: green.withOpacity(0.08),
+                        color: green.withValues(alpha: 0.08),
                         blurRadius: 18,
                         spreadRadius: 2,
                       )
@@ -483,7 +489,7 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
                                 Text(
                                   todayFocus.toUpperCase(),
                                   style: TextStyle(
-                                    color: const Color(0xFFD6FF00),
+                                    color: green,
                                     fontSize: 22.sp,
                                     fontWeight: FontWeight.bold,
                                     fontFamily: GoogleFonts.bebasNeue().fontFamily,
@@ -506,8 +512,8 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
                             padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 6.sp),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(14),
-                              color: Colors.black.withOpacity(0.25),
-                              border: Border.all(color: Colors.grey.shade800),
+                              color: Colors.black.withValues(alpha: 0.25),
+                              border: Border.all(color: surfaceBorder),
                             ),
                             child: Text(
                               "${todayExercises.length} workouts",
@@ -529,8 +535,8 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
                             padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 6.sp),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(14),
-                              color: Colors.black.withOpacity(0.2),
-                              border: Border.all(color: Colors.grey.shade800),
+                              color: Colors.black.withValues(alpha: 0.2),
+                              border: Border.all(color: surfaceBorder),
                             ),
                             child: Text(
                               chip,
@@ -650,51 +656,125 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
                 //   ),
                 // ),
                 sizedtwenty(context),
-                Text('Fitness Guide', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Fitness Guides & Tips',
+                        style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => FitnessGuidePage(),
+                        ));
+                      },
+                      child: Text('View All',
+                          style: TextStyle(color: green, fontSize: 13.sp, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
                 SizedBox(height: 12.sp),
                 GestureDetector(
                   onTap: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => WorkoutHistoryPage(),
+                      builder: (context) => FitnessGuidePage(),
                     ));
                   },
                   child: Container(
-                    width: 48.sp,
-                    height: 54.sp,
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Image.asset(
-                            'assets/images/challenge.png',
-                            width: double.infinity,
-                            height: 48.sp,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Icon(Icons.bookmark, color: green, size: 24),
-                        ),
-                        Positioned(
-                          bottom: 10,
-                          left: 10,
-                          right: 10,
-                          child: Text(
-                            guide.title,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.bold,
+                    height: 140,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: surfaceBorder, width: 1.2),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: Image.asset(
+                              'assets/images/challenge.png',
+                              fit: BoxFit.cover,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.bottomCenter,
+                                  end: Alignment.topCenter,
+                                  colors: [
+                                    Colors.black.withValues(alpha: 0.92),
+                                    Colors.black.withValues(alpha: 0.25),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 10.sp,
+                            right: 10.sp,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 4.sp),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: green.withValues(alpha: 0.6)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.bookmark_rounded, color: green, size: 14.sp),
+                                  SizedBox(width: 3.sp),
+                                  Text(
+                                    guide.duration,
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 10.sp, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 12.sp,
+                            left: 12.sp,
+                            right: 12.sp,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 2.5.sp),
+                                  decoration: BoxDecoration(
+                                    color: green,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    guide.category.toUpperCase(),
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 9.sp,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 5.sp),
+                                Text(
+                                  guide.title,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -724,8 +804,8 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
       padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 12.sp),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15.sp),
-        color: const Color(0xFF121212),
-        border: Border.all(color: Colors.grey.shade800, width: 1),
+        color: surfaceDark,
+        border: Border.all(color: surfaceBorder, width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -736,8 +816,8 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
 
           switch (status[index]) {
             case 3: // Completed
-              borderColor = const Color.fromARGB(255, 0, 255, 8);
-              fillColor = Colors.transparent;
+              borderColor = green.withAlpha(200);
+              fillColor = green.withAlpha(35);
               textColor = Colors.white;
               break;
             case 2: // Missed
@@ -746,14 +826,14 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
               textColor = Colors.white;
               break;
             case 1: // Active (today)
-              borderColor = Colors.white;
-              fillColor = Colors.deepPurple;
-              textColor = Colors.white;
+              borderColor = green;
+              fillColor = green;
+              textColor = Colors.black;
               break;
             default: // Upcoming
-              borderColor = Colors.grey.shade700;
+              borderColor = surfaceBorder;
               fillColor = Colors.transparent;
-              textColor = Colors.white;
+              textColor = Colors.white38;
           }
 
           return Container(
@@ -780,36 +860,191 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
     );
   }
 
+  Widget _buildWeeklyChallengeCard(Challenge challenge, double progress) {
+    final int target = challenge.target > 0 ? challenge.target : challenge.exerciseIds.length;
+    final int current = challenge.progress;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14.sp),
+      decoration: BoxDecoration(
+        color: surfaceDark,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: surfaceBorder, width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.bolt_rounded, color: green, size: 18.sp),
+                  SizedBox(width: 4.sp),
+                  Text(
+                    'WEEKLY CHALLENGE',
+                    style: TextStyle(
+                      color: green,
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 3.sp),
+                decoration: BoxDecoration(
+                  color: green.withAlpha(35),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: green.withAlpha(80)),
+                ),
+                child: Text(
+                  challenge.difficulty.toUpperCase(),
+                  style: TextStyle(
+                    color: green,
+                    fontSize: 9.5.sp,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.sp),
+          Text(
+            challenge.title,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (challenge.description != null && challenge.description!.isNotEmpty) ...[
+            SizedBox(height: 3.sp),
+            Text(
+              challenge.description!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 12.sp,
+              ),
+            ),
+          ],
+          SizedBox(height: 10.sp),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Progress: $current / $target workouts',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11.5.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                '${(progress * 100).toInt()}%',
+                style: TextStyle(
+                  color: green,
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 6.sp),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 7,
+              backgroundColor: const Color(0xFF262626),
+              valueColor: const AlwaysStoppedAnimation<Color>(green),
+            ),
+          ),
+          SizedBox(height: 10.sp),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => WeeklyChallenge(challenge: challenge),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 4.sp),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'View Challenge Details',
+                        style: TextStyle(
+                          color: green,
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: 2.sp),
+                      Icon(Icons.arrow_forward_rounded, color: green, size: 13.sp),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildWorkoutCard(Exercise ex) {
     final imagePath = ex.imageUrl ?? "assets/images/gym.png";
 
     return GestureDetector(
-      onTap: () {
-        // Build the map in the format WorkoutDetailsPage expects
+      onTap: () async {
+        // Build the map with complete fields for WorkoutDetailsPage
         final exerciseMap = {
           'title': ex.name,
           'imageUrl': imagePath,
-          // adapt these keys/fields to your Exercise model
-          'equipment': ex.equipment ?? 'Bodyweight',
-          // 'muscle': ex.muscleGroup ?? 'Full Body',
-          // 'level': ex.level ?? 'Beginner',
+          'category': ex.category,
+          'difficulty': ex.difficulty,
+          'equipment': ex.equipment,
+          'targetMuscles': ex.targetMuscles,
+          'sets': ex.sets,
+          'reps': ex.reps,
+          'restTime': ex.restTime,
+          'duration': ex.duration,
+          'caloriesBurned': ex.caloriesBurned ?? 0,
         };
 
-        Navigator.of(context).push(
+        final completed = await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => WorkoutDetailsPage(
-              // for now we pass a single-exercise list
               exercises: [exerciseMap],
             ),
           ),
         );
+
+        if (completed == true && mounted) {
+          fetchAllExercises();
+          fetchChallenges();
+        }
       },
       child: Container(
         width: 53.sp,
         height: 52.sp,
         decoration: BoxDecoration(
-          color: Colors.grey[900],
+          color: surfaceDark,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: surfaceBorder, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -858,7 +1093,7 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
               child: Text(
                 ex.name,
                 style: TextStyle(
-                  color: const Color(0xFFD6FF00),
+                  color: green,
                   fontWeight: FontWeight.bold,
                   fontFamily: GoogleFonts.bebasNeue().fontFamily,
                   letterSpacing: 1,
@@ -870,17 +1105,17 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
               padding: const EdgeInsets.only(left: 8, bottom: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.access_time, color: Colors.purple, size: 16),
+                  const Icon(Icons.access_time, color: green, size: 16),
                   const SizedBox(width: 4),
                   Text(
                     "${ex.duration} Min",
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
                   const SizedBox(width: 12),
-                  Icon(Icons.local_fire_department, color: Colors.purple, size: 16.sp),
+                  Icon(Icons.local_fire_department, color: green, size: 16.sp),
                   const SizedBox(width: 4),
                   Text(
-                    "${ex.caloriesBurned} Kcal",
+                    "${ex.caloriesBurned ?? 0} Kcal",
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ],

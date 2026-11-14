@@ -4,11 +4,13 @@ import 'package:intl_phone_field/country_picker_dialog.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/features/auth/data/auth_services.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart';
 import 'package:orca/features/auth/domain/auth_repo.dart';
 import 'package:orca/features/auth/presentation/gym_owner_login.dart';
 import 'package:orca/features/auth/presentation/password-screen.dart';
 import 'package:orca/features/auth/presentation/signup_page.dart';
 import 'package:orca/features/home/presentation/bottomnav.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 class PhoneNumber extends StatefulWidget {
@@ -20,13 +22,39 @@ class PhoneNumber extends StatefulWidget {
 
 class _PhoneNumberState extends State<PhoneNumber> {
   final TextEditingController phoneController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  bool _useEmail = false;
   final AuthRepo _authRepo = AuthRepo(authServices: AuthServices());
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
 
-  String _selectedCountryCode = '+91';
-  final List<String> _countryCodes = ['+91', '+1', '+44', '+61', '+971'];
+  @override
+  void dispose() {
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  Route _smoothRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.05, 0),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
+        );
+      },
+      transitionDuration: const Duration(milliseconds: 300),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,155 +81,120 @@ class _PhoneNumberState extends State<PhoneNumber> {
                         ),
                         SizedBox(height: 10.sp),
                         Text(
-                          'Enter your ${_useEmail ? "email address" : "phone number"} to get started',
+                          'Enter your phone number to get started',
                           style: TextStyle(color: whitet150),
                           textAlign: TextAlign.center,
                         ),
                         SizedBox(height: 20.sp),
-                        if (!_useEmail)
-                          IntlPhoneField(
-                            dropdownIconPosition: IconPosition.trailing,
-                            dropdownIcon: Icon(
-                              Icons.arrow_drop_down,
-                              color: white.withAlpha(200),
+                        IntlPhoneField(
+                          dropdownIconPosition: IconPosition.trailing,
+                          dropdownIcon: Icon(
+                            Icons.arrow_drop_down,
+                            color: white.withAlpha(200),
+                          ),
+                          pickerDialogStyle: PickerDialogStyle(
+                            backgroundColor: darkgreen,
+                            countryNameStyle: TextStyle(color: white),
+                            countryCodeStyle: TextStyle(color: white),
+                            listTileDivider: Container(
+                              height: 3.sp,
+                              color: green,
                             ),
-                            pickerDialogStyle: PickerDialogStyle(
-                              backgroundColor: darkgreen,
-                              countryNameStyle: TextStyle(color: white),
-                              countryCodeStyle: TextStyle(color: white),
-                              listTileDivider: Container(
-                                height: 3.sp,
-                                color: green,
-                              ),
-                              searchFieldCursorColor: white,
-                              searchFieldInputDecoration: InputDecoration(
-                                hintText: 'Search country',
-                                hintStyle: TextStyle(color: whitet150),
-                              ),
-                            ),
-                            controller: phoneController,
-                            style: const TextStyle(color: Colors.white),
-                            dropdownTextStyle: const TextStyle(color: Colors.white),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: whitet50,
-                              hintText: 'Phone number',
+                            searchFieldCursorColor: white,
+                            searchFieldInputDecoration: InputDecoration(
+                              hintText: 'Search country',
                               hintStyle: TextStyle(color: whitet150),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.sp),
-                                borderSide: BorderSide.none,
-                              ),
                             ),
-                            initialCountryCode: 'IN',
-                            onChanged: (phone) {
-                              String localNumber = phone.number;
-                              if (localNumber.startsWith(phone.countryCode.replaceAll('+', ''))) {
-                                localNumber = localNumber.replaceFirst(
-                                  phone.countryCode.replaceAll('+', ''),
-                                  '',
-                                );
-                              }
-                              localNumber = localNumber.replaceAll('+', '').trim();
-                              phoneController.text = localNumber;
-                              phoneController.selection = TextSelection.fromPosition(
-                                TextPosition(offset: phoneController.text.length),
+                          ),
+                          controller: phoneController,
+                          style: const TextStyle(color: Colors.white),
+                          dropdownTextStyle: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: whitet50,
+                            hintText: 'Phone number',
+                            hintStyle: TextStyle(color: whitet150),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12.sp),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          initialCountryCode: 'IN',
+                          onChanged: (phone) {
+                            String localNumber = phone.number;
+                            if (localNumber.startsWith(phone.countryCode.replaceAll('+', ''))) {
+                              localNumber = localNumber.replaceFirst(
+                                phone.countryCode.replaceAll('+', ''),
+                                '',
                               );
+                            }
+                            localNumber = localNumber.replaceAll('+', '').trim();
+                            phoneController.text = localNumber;
+                            phoneController.selection = TextSelection.fromPosition(
+                              TextPosition(offset: phoneController.text.length),
+                            );
 
-                              debugPrint('Cleaned local number: $localNumber');
-                              debugPrint('Full number: ${phone.completeNumber}');
-                            },
-                          ),
-                        if (_useEmail)
-                          TextField(
-                            controller: emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            style: TextStyle(color: white),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: whitet50,
-                              hintText: 'Email address',
-                              hintStyle: TextStyle(color: whitet150),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.sp),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                          ),
-                        SizedBox(height: 10.sp),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _useEmail = !_useEmail;
-                                  emailController.clear();
-                                });
-                              },
-                              child: Text(
-                                _useEmail ? 'Use phone instead' : 'Use email instead',
-                                style: TextStyle(
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: white,
-                                  decorationThickness: 1.5,
-                                  color: white,
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
+                            debugPrint('Cleaned local number: $localNumber');
+                            debugPrint('Full number: ${phone.completeNumber}');
+                          },
                         ),
                         SizedBox(height: 15.sp),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:green, 
+                            backgroundColor: green,
                             padding: EdgeInsets.symmetric(vertical: 14.sp),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12.sp),
                             ),
                           ),
                           onPressed: _isLoading
-                              ? (){}
+                              ? null
                               : () async {
                                   final phone = phoneController.text.trim();
-                                  /// change style of snackbar
-                                  if (phone.isEmpty) {
+                                  if (phone.isEmpty || phone.length < 10) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text("Please enter a valid phone number")),
+                                      const SnackBar(content: Text("Please enter a valid 10-digit phone number")),
                                     );
                                     return;
                                   }
 
+                                  // Dismiss keyboard smoothly
+                                  FocusScope.of(context).unfocus();
                                   setState(() => _isLoading = true);
 
                                   try {
                                     final exists = await _authRepo.checkUserExistence(phone);
 
+                                    if (!mounted) return;
+
                                     if (exists) {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(
-                                          builder: (_) => PasswordScreen(
+                                        _smoothRoute(
+                                          PasswordScreen(
                                             phoneNumber: phone,
-                                            email: emailController.text,
+                                            email: '',
                                           ),
                                         ),
                                       );
                                     } else {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(
-                                          builder: (_) => ProgressiveSignupPage(phoneNumber: phone),
+                                        _smoothRoute(
+                                          ProgressiveSignupPage(phoneNumber: phone),
                                         ),
                                       );
                                     }
                                   } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text("Error: $e")),
-                                    );
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text("Error: $e")),
+                                      );
+                                    }
                                   } finally {
-                                    setState(() => _isLoading = false);
+                                    if (mounted) {
+                                      setState(() => _isLoading = false);
+                                    }
                                   }
                                 },
                           child: Center(
@@ -242,33 +235,78 @@ class _PhoneNumberState extends State<PhoneNumber> {
                               borderRadius: BorderRadius.circular(12.sp),
                             ),
                           ),
-                          icon: Image.asset(
-                            'assets/images/google-logo.png',
-                            height: 20.sp,
-                          ),
+                          icon: _isGoogleLoading
+                              ? SizedBox(
+                                  height: 18.sp,
+                                  width: 18.sp,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2.2,
+                                    color: Colors.black,
+                                  ),
+                                )
+                              : Image.asset(
+                                  'assets/images/google-logo.png',
+                                  height: 20.sp,
+                                ),
                           label: Text(
-                            "Continue with Google",
+                            _isGoogleLoading ? "Signing in..." : "Continue with Google",
                             style: TextStyle(
                               color: Colors.black,
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          onPressed: () async {
-                            final user = await AuthRepo(authServices: AuthServices()).handleSignIn();
-                            if (user != null) {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(builder: (context) => NavBarPage()),
-                                (route) => false,
-                              );
-                              debugPrint('handle sign in');
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Google sign-in failed")),
-                              );
-                            }
-                          },
+                          onPressed: (_isLoading || _isGoogleLoading)
+                              ? null
+                              : () async {
+                                  FocusScope.of(context).unfocus();
+                                  setState(() => _isGoogleLoading = true);
+                                  try {
+                                    final result = await _authRepo.handleSignIn();
+                                    if (!mounted) return;
+
+                                    if (result.isSuccess && result.user != null) {
+                                      final auth = Provider.of<AuthProvider>(context, listen: false);
+                                      final token = await result.user!.getIdToken() ?? result.user!.uid;
+                                      final name = result.user?.displayName;
+                                      await auth.login(token, "User", userName: name);
+
+                                      Navigator.pushAndRemoveUntil(
+                                        context,
+                                        _smoothRoute(const NavBarPage()),
+                                        (route) => false,
+                                      );
+                                      debugPrint('Google Sign-In success: ${result.user?.email}');
+                                    } else if (result.isCancelled) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(result.errorMessage ?? "Google sign-in was cancelled"),
+                                          backgroundColor: Colors.orange.shade800,
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(result.errorMessage ?? "Google sign-in failed"),
+                                          backgroundColor: Colors.red.shade800,
+                                          duration: const Duration(seconds: 5),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text("Error: $e"),
+                                        backgroundColor: Colors.red.shade800,
+                                      ),
+                                    );
+                                  } finally {
+                                    if (mounted) {
+                                      setState(() => _isGoogleLoading = false);
+                                    }
+                                  }
+                                },
                         ),
                       ],
                     ),
@@ -294,7 +332,7 @@ class _PhoneNumberState extends State<PhoneNumber> {
                       TextSpan(
                         text: 'Proceed here →',
                         style: TextStyle(
-                          color: green, // your theme green
+                          color: green,
                           fontSize: 14.sp,
                           fontWeight: FontWeight.bold,
                           decoration: TextDecoration.underline,
@@ -303,9 +341,7 @@ class _PhoneNumberState extends State<PhoneNumber> {
                           ..onTap = () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => const GymOwnerLoginPage(),
-                              ),
+                              _smoothRoute(const GymOwnerLoginPage()),
                             );
                           },
                       ),

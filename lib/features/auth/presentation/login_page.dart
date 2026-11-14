@@ -3,9 +3,11 @@ import 'package:intl_phone_field/country_picker_dialog.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/features/auth/data/auth_services.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart';
 import 'package:orca/features/auth/domain/auth_repo.dart';
 import 'package:orca/features/auth/presentation/otp_verify.dart';
 import 'package:orca/features/home/presentation/bottomnav.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 class LoginPage extends StatefulWidget {
@@ -20,8 +22,10 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final AuthRepo _authRepo = AuthRepo(authServices: AuthServices());
 
-  bool _useEmail = false;
+  final bool _useEmail = false;
+  bool _isGoogleLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -120,20 +124,20 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
 
-                  TextField(
-                    controller: phoneController,
-                    style: TextStyle(color: white),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: whitet50,
-                      hintText: 'Password',
-                      hintStyle: TextStyle(color: whitet150),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.sp),
-                        borderSide: BorderSide.none,
-                      ),
+                TextField(
+                  controller: passwordController,
+                  style: TextStyle(color: white),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: whitet50,
+                    hintText: 'Password',
+                    hintStyle: TextStyle(color: whitet150),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.sp),
+                      borderSide: BorderSide.none,
                     ),
                   ),
+                ),
 
                 SizedBox(height: 15.sp),
                 ElevatedButton(
@@ -145,7 +149,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   onPressed: () {
-                    // You can use controller.text and _selectedCountryCode here
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -177,29 +180,76 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(12.sp),
                     ),
                   ),
-                  icon: Image.asset(
-                    'assets/images/google-logo.png',
-                    height: 20.sp,
-                  ),
+                  icon: _isGoogleLoading
+                      ? SizedBox(
+                          height: 18.sp,
+                          width: 18.sp,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Colors.black,
+                          ),
+                        )
+                      : Image.asset(
+                          'assets/images/google-logo.png',
+                          height: 20.sp,
+                        ),
                   label: Text(
-                    "Continue with Google",
+                    _isGoogleLoading ? "Signing in..." : "Continue with Google",
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  onPressed: () async {
-                    final user = await AuthRepo(authServices: AuthServices()).handleSignIn();
-                    if (user != null) {
-                      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => NavBarPage()), (route) => false);
-                      debugPrint('handle sign in');
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Google sign-in failed")),
-                      );
-                    }
-                  },
+                  onPressed: _isGoogleLoading
+                      ? null
+                      : () async {
+                          setState(() => _isGoogleLoading = true);
+                          try {
+                            final result = await _authRepo.handleSignIn();
+                            if (!mounted) return;
+
+                            if (result.isSuccess && result.user != null) {
+                              final auth = Provider.of<AuthProvider>(context, listen: false);
+                              final token = await result.user!.getIdToken() ?? result.user!.uid;
+                              await auth.login(token, "User");
+
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(builder: (context) => const NavBarPage()),
+                                (route) => false,
+                              );
+                              debugPrint('Google Sign-In success: ${result.user?.email}');
+                            } else if (result.isCancelled) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(result.errorMessage ?? "Google sign-in was cancelled"),
+                                  backgroundColor: Colors.orange.shade800,
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(result.errorMessage ?? "Google sign-in failed"),
+                                  backgroundColor: Colors.red.shade800,
+                                  duration: const Duration(seconds: 5),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Error: $e"),
+                                backgroundColor: Colors.red.shade800,
+                              ),
+                            );
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isGoogleLoading = false);
+                            }
+                          }
+                        },
                 ),
               ],
             ),

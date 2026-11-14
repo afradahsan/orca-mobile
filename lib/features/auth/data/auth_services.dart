@@ -19,15 +19,39 @@ class AuthServices {
       );
 
       final body = jsonDecode(response.body);
-      debugPrint("checkUserByPhone: -- User existss ${response.statusCode}, $body");
+      debugPrint("checkUserByPhone: -- User exists status ${response.statusCode}, $body");
 
       // ✅ If backend says "Invalid credentials" — user exists
       if (response.statusCode == 401 && body['error']?.toString().contains("Invalid credentials") == true) {
         return true;
       }
 
-      // ✅ If backend says "User not found" — user doesn't exist
+      // ✅ If backend says "User not found" — double-check alternative format (+91 vs local 10-digit)
       if (response.statusCode == 401 && body['error']?.toString().contains("User not found") == true) {
+        String altPhone;
+        if (phone.startsWith('+91')) {
+          altPhone = phone.replaceFirst('+91', '').trim();
+        } else if (phone.length == 10) {
+          altPhone = '+91$phone';
+        } else {
+          return false;
+        }
+
+        try {
+          final altResponse = await http.post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              "phone": altPhone,
+              "password": "dummyPassword123",
+            }),
+          );
+          final altBody = jsonDecode(altResponse.body);
+          if (altResponse.statusCode == 401 && altBody['error']?.toString().contains("Invalid credentials") == true) {
+            return true;
+          }
+        } catch (_) {}
+
         return false;
       }
 
@@ -50,7 +74,34 @@ class AuthServices {
       body: jsonEncode({'phone': phone, 'password': password}),
     );
 
-    return jsonDecode(response.body);
+    final Map<String, dynamic> body = jsonDecode(response.body);
+    if (response.statusCode == 200 && body['token'] != null) {
+      return body;
+    }
+
+    // If failed, try alternative phone format (+91 vs local 10-digit)
+    String? altPhone;
+    if (phone.startsWith('+91')) {
+      altPhone = phone.replaceFirst('+91', '').trim();
+    } else if (phone.length == 10) {
+      altPhone = '+91$phone';
+    }
+
+    if (altPhone != null) {
+      try {
+        final altResponse = await http.post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'phone': altPhone, 'password': password}),
+        );
+        final altBody = jsonDecode(altResponse.body);
+        if (altResponse.statusCode == 200 && altBody['token'] != null) {
+          return altBody;
+        }
+      } catch (_) {}
+    }
+
+    return body;
   }
 
   Future<Map<String, dynamic>> registerUser({

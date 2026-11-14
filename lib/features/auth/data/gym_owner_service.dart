@@ -89,7 +89,7 @@ class GymOwnerService {
     await Future.delayed(const Duration(milliseconds: 100));
 
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString("gym_token");
+    return prefs.getString("gym_token") ?? prefs.getString("token");
   }
 
   Future<bool> addExercise(Map<String, dynamic> data) async {
@@ -130,26 +130,45 @@ class GymOwnerService {
     }
   }
 
-  Future<bool> addMember(String email, String phone) async {
+  Future<Map<String, dynamic>> addMember(String email, String phone) async {
     final token = await _getToken();
 
     debugPrint('Add Member called. $token');
 
-    final response = await http.post(
-      Uri.parse("$baseUrl/members/add"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-      body: jsonEncode({
-        "email": email,
-        "phone": phone,
-      }),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/members/add"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({
+          "email": email.trim(),
+          "phone": phone.trim(),
+        }),
+      );
 
-    debugPrint('returned: ${response.statusCode}, ${response.body}');
+      debugPrint('returned: ${response.statusCode}, ${response.body}');
+      final Map<String, dynamic> body = response.body.isNotEmpty ? jsonDecode(response.body) : {};
 
-    return response.statusCode == 201;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          "success": true,
+          "message": body["message"] ?? "Member added successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": body["message"] ?? body["error"] ?? "Failed to add member (${response.statusCode})",
+        };
+      }
+    } catch (e) {
+      debugPrint("Error in addMember: $e");
+      return {
+        "success": false,
+        "message": "Connection error: $e",
+      };
+    }
   }
 
   Future<List<MemberModel>> getMembers() async {

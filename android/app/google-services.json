@@ -7,14 +7,14 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:966816861961:android:d5dcc5447f66d2549f4dd8",
+        "mobilesdk_app_id": "1:966816861961:android:b1f8000e4685bee59f4dd8",
         "android_client_info": {
           "package_name": "com.orca.osclub"
         }
       },
       "oauth_client": [
         {
-          "client_id": "966816861961-cco82i5n5vfek461nso7rpe5754nr670.apps.googleusercontent.com",
+          "client_id": "966816861961-u76p1d3hta7b8vv66c23u3r0calsamml.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.orca.osclub",
@@ -22,7 +22,7 @@
           }
         },
         {
-          "client_id": "966816861961-tva7k85opl4gjelj9it12vjs76n24lgg.apps.googleusercontent.com",  
+          "client_id": "966816861961-tva7k85opl4gjelj9it12vjs76n24lgg.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -42,7 +42,7 @@
               "client_id": "966816861961-5dseucupt4mh1ldsvija19g92u8j228n.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.orca.osclub"
+                "bundle_id": "com.example.orca"
               }
             }
           ]
