@@ -40,6 +40,34 @@ class Challenge {
     );
   }
 
+  Challenge copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? difficulty,
+    int? durationDays,
+    DateTime? startDate,
+    DateTime? endDate,
+    List<String>? exerciseIds,
+    bool? isActive,
+    int? progress,
+    int? target,
+  }) {
+    return Challenge(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      difficulty: difficulty ?? this.difficulty,
+      durationDays: durationDays ?? this.durationDays,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      exerciseIds: exerciseIds ?? this.exerciseIds,
+      isActive: isActive ?? this.isActive,
+      progress: progress ?? this.progress,
+      target: target ?? this.target,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'title': title,
         'description': description,

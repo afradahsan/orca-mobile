@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:orca/core/utils/colors.dart';
 import 'package:orca/core/utils/constants.dart';
+import 'package:orca/features/auth/domain/auth_provider.dart';
 import 'package:orca/features/fitness/data/member_challenge_service.dart';
 import 'package:orca/features/fitness/domain/challenge_model.dart';
 import 'package:orca/features/fitness/domain/challenge_task_model.dart';
 import 'package:orca/features/fitness/domain/member_challenge_model.dart';
+import 'package:orca/features/fitness/presentations/all_workouts.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 
@@ -42,9 +45,12 @@ class _WeeklyChallengeState extends State<WeeklyChallenge> {
     super.initState();
     challenge = widget.challenge;
 
-    weeklyTarget = challenge.exerciseIds.length;
-    completedWorkouts = challenge.progress ?? 0;
-    weeklyStreak = 2; // later from backend
+    // Use challenge target if defined, fallback to exercise list length or standard 5
+    weeklyTarget = challenge.target > 0
+        ? challenge.target
+        : (challenge.exerciseIds.isNotEmpty ? challenge.exerciseIds.length : 5);
+    completedWorkouts = challenge.progress;
+    weeklyStreak = 1;
 
     _loadSuggestedPlan();
     _fetchProgress();
@@ -52,19 +58,21 @@ class _WeeklyChallengeState extends State<WeeklyChallenge> {
 
   Future<void> _fetchProgress() async {
     try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString("member_token") ?? prefs.getString("token");
-
-      if (token == null || token.isEmpty) {
-        if (mounted) setState(() => loadingProgress = false);
-        return;
-      }
+      final token = auth.token ?? prefs.getString("token") ?? prefs.getString("member_token") ?? '';
 
       final data = await MemberChallengeService().getProgress(challenge.id, token);
 
       if (mounted) {
         setState(() {
           progressData = data;
+          if (data.completedWorkouts > completedWorkouts) {
+            completedWorkouts = data.completedWorkouts;
+          }
+          if (data.streak > 0) {
+            weeklyStreak = data.streak;
+          }
           loadingProgress = false;
         });
       }
@@ -85,32 +93,40 @@ class _WeeklyChallengeState extends State<WeeklyChallenge> {
   }
 
   /// Derived
-  double get progress => weeklyTarget == 0 ? 0 : completedWorkouts / weeklyTarget;
-  int get remainingWorkouts => weeklyTarget - completedWorkouts;
+  double get progress => weeklyTarget == 0 ? 0 : (completedWorkouts / weeklyTarget).clamp(0.0, 1.0);
+  int get remainingWorkouts => (weeklyTarget - completedWorkouts).clamp(0, weeklyTarget);
 
   bool get bronzeUnlocked => completedWorkouts >= (weeklyTarget * 0.4);
   bool get silverUnlocked => completedWorkouts >= (weeklyTarget * 0.7);
   bool get goldUnlocked => completedWorkouts >= weeklyTarget;
 
   /// Log workout (habit action → reward)
-  void _logWorkoutConfirmed() {
+  Future<void> _logWorkoutConfirmed() async {
     if (completedWorkouts >= weeklyTarget) return;
 
-    setState(() {
-      completedWorkouts += 1;
-      if (completedWorkouts == weeklyTarget) {
-        weeklyStreak += 1;
-      }
-    });
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final prefs = await SharedPreferences.getInstance();
+    final token = auth.token ?? prefs.getString("token") ?? prefs.getString("member_token") ?? '';
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          completedWorkouts == weeklyTarget ? "🔥 Challenge completed! Streak +1" : "Workout logged. Keep going 💪",
+    final updated = await MemberChallengeService().logWorkout(challenge.id, token);
+
+    if (mounted) {
+      setState(() {
+        completedWorkouts = updated.completedWorkouts;
+        weeklyStreak = updated.streak;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            completedWorkouts >= weeklyTarget
+                ? "🔥 Challenge completed! Streak +1"
+                : "Workout logged! ($completedWorkouts / $weeklyTarget) Keep going 💪",
+          ),
+          backgroundColor: green,
         ),
-        backgroundColor: Colors.greenAccent.withOpacity(0.9),
-      ),
-    );
+      );
+    }
   }
 
   void _showLogWorkoutDialog() {
@@ -128,15 +144,18 @@ class _WeeklyChallengeState extends State<WeeklyChallenge> {
   Widget build(BuildContext context) {
     final remainingDays = challenge.endDate.difference(DateTime.now()).inDays;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: white,
-          onPressed: () => Navigator.pop(context),
-        ),
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {},
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            color: white,
+            onPressed: () => Navigator.pop(context, true),
+          ),
         title: Text(
           'Weekly Challenge',
           style: TextStyle(
@@ -170,7 +189,8 @@ class _WeeklyChallengeState extends State<WeeklyChallenge> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   /// HEADER (Cue)

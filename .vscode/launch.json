@@ -1,0 +1,11 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "orca-mobile (iPhone 16e Simulator)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "39D58D28-7407-4C65-954E-531B2D4D5435"
+    }
+  ]
+}

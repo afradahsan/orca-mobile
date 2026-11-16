@@ -15,6 +15,7 @@ import 'package:orca/features/fitness/presentations/wokout_history.dart';
 import 'package:orca/features/fitness/presentations/workout_details.dart';
 import 'package:orca/features/fitness/presentations/workout_log.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:sizer/sizer.dart';
 
@@ -95,22 +96,65 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
       await auth.loadAuthData();
 
       final String token = auth.token ?? '';
-      if (token.isEmpty) {
-        setState(() => loadingChallenges = false);
-        return;
+      final prefs = await SharedPreferences.getInstance();
+
+      List<Challenge> fetched = [];
+      if (token.isNotEmpty) {
+        try {
+          fetched = await _challengeService.getChallenges(token);
+        } catch (e) {
+          debugPrint("Challenge remote fetch error: $e");
+        }
       }
 
-      final fetched = await _challengeService.getChallenges(token);
+      // If backend has no active challenges, supply an active weekly challenge
+      if (fetched.isEmpty) {
+        final now = DateTime.now();
+        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+        final endOfWeek = startOfWeek.add(const Duration(days: 6));
 
-      setState(() {
-        challenges = fetched;
-        loadingChallenges = false;
-      });
+        fetched = [
+          Challenge(
+            id: "weekly_active_challenge",
+            title: "Weekly Consistency Grind",
+            description: "Hit 5 workouts this week to build unstoppable momentum and earn bonus Aura.",
+            difficulty: "All Levels",
+            durationDays: 7,
+            startDate: startOfWeek,
+            endDate: endOfWeek,
+            exerciseIds: [],
+            isActive: true,
+            progress: prefs.getInt("challenge_progress_weekly_active_challenge") ?? 0,
+            target: 5,
+          )
+        ];
+      }
 
-      debugPrint("Fetched ${challenges.length} challenges");
+      // Sync active challenge ID for workout logs and workout completions
+      if (fetched.isNotEmpty) {
+        await prefs.setString("active_challenge_id", fetched.first.id);
+      }
+
+      // Merge local completed count with server challenge progress
+      final synced = fetched.map((c) {
+        final localProgress = prefs.getInt("challenge_progress_${c.id}");
+        if (localProgress != null && localProgress > c.progress) {
+          return c.copyWith(progress: localProgress);
+        }
+        return c;
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          challenges = synced;
+          loadingChallenges = false;
+        });
+      }
+
+      debugPrint("Synced ${challenges.length} challenges (Active: ${challenges.first.title}, Progress: ${challenges.first.progress}/${challenges.first.target})");
     } catch (e) {
       debugPrint("Challenge Load Error: $e");
-      setState(() => loadingChallenges = false);
+      if (mounted) setState(() => loadingChallenges = false);
     }
   }
 
@@ -971,13 +1015,16 @@ class _FitnessPageState extends State<FitnessPage> with AutomaticKeepAliveClient
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => WeeklyChallenge(challenge: challenge),
                     ),
                   );
+                  if (result == true && mounted) {
+                    fetchChallenges();
+                  }
                 },
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 4.sp),
